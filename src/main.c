@@ -1,4 +1,17 @@
+#include <stdio.h>
 #include "raylib.h"
+// Aqui faremos os #include dos arquivos acima (mapa.h, entidades.h, combate.h)
+
+// ---------------------------------------------------------
+// TRABALHO CONJUNTO (Montagem do Jogo)
+// ---------------------------------------------------------
+// O que adicionar aqui:
+// 1. Criar a Enumeração (enum) dos estados: TELA_MENU, TELA_EXPLORACAO, TELA_COMBATE.
+// 2. Inicializar a janela da Raylib (InitWindow).
+// 3. Instanciar o jogador e o inimigo (usando as structs feitas no entidades.c).
+// 4. Criar o 'while (!WindowShouldClose())' (Game Loop).
+// 5. Fazer o switch(estadoAtual) e chamar as funções de desenhar mapa, mover jogador
+//    ou resolver combate dependendo da tela em que estamos.
 
 int main(void)
 {
