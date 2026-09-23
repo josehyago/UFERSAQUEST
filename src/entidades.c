@@ -12,6 +12,8 @@
 // 5. Na função mover, ler as teclas WASD/Setas da Raylib (IsKeyPressed).
 // 6. Antes de alterar a posição x/y do jogador, verificar o IF na matriz do mapa 
 //    para impedir que ele ande por cima do número 1 (paredes).
+
+
 typedef struct{
     float x;              
     float y;               
@@ -35,20 +37,42 @@ typedef struct{
     Vector2 pos;
 } Inimigo; 
 
-void moverJogador ( Jogador *jogador, int matrizMapa){
+void moverJogador ( Jogador *jogador, int matrizMapa [LINHA][COLUNA]){
+    int linhaAtual= jogador -> pos.y; // posição do jogador no eixo y
+    int colunaAtual =  jogador -> pos.x; // posição do jogador no eixo x;
 
-    int **matrizMapa= (Jogador*) malloc ( jogador * sizeof (Jogador*));
-    if (matrizMapa=NULL) return NULL;
+    int novaLinha= linhaAtual; // Atualização do antiga posição. A novaLinha e novaColuna são variáveis temporáveis
+    int novaColuna= colunaAtual;
+        
+    if (IsKeyPressed (KEY_S)) novaLinha ++; // Teclas sendo pressionadas
+    if (IsKeyPressed (KEY_A)) novaColuna --;
+    if (IsKeyPressed (KEY_W)) novaLinha --;
+    if (IsKeyPressed (KEY_D)) novaColuna ++;
+
+    // Irá verificar se o mapa não encontrou uma parede. Se não,
+    // irá dá prosseguimento ao movimento do jogador. 
+
+    if (matrizMapa [novaLinha][novaColuna]!=1){
+        jogador -> pos.y= novaLinha;
+        jogador -> pos.x = novaColuna;
+          }
+
+
+    }
+
+   
     
-    Jogador jogadorx;
-    Jogador jogadory;
+    
 
-    for (int i=0; i< jogadorx ; i++){
-        matrizMapa [i]= (Jogador*) malloc (jodadory * sizeof (jogador));
-           for (int j=0; j< jogadory; j++){
-               
+int main (){
 
-           }
+    // outras funções aqui:
+
+
+
+While (!WindowShouldClose()){
+     
+    moverJogador (&jogador, matrizMapa);
        
     }
 
