@@ -72,7 +72,7 @@ int main (){
 
 While (!WindowShouldClose()){
      
-    moverJogador (&jogador, matrizMapa);
+    moverJogador (&jogador, matrizMapa); // Chamar o mover jogador 
        
     }
 
