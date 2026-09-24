@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "raylib.h" 
+#include "raylib.h"
+
 // ---------------------------------------------------------
 // RESPONSÁVEL PELO COMBATE E PERGUNTAS: [Hyago]
 // ---------------------------------------------------------
