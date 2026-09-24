@@ -1,10 +1,11 @@
+#include "combate.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "raylib.h"
 
 // ---------------------------------------------------------
-// RESPONSÁVEL PELO COMBATE E PERGUNTAS: [Hyago]
+// RESPONSÁVEL PELO COMBATE E PERGUNTAS: [Ryon]
 // ---------------------------------------------------------
 // O que adicionar aqui:
 // 1. Criar a 'struct Pergunta' com texto, um vetor de strings para as 4 opções, e a resposta correta.
@@ -26,6 +27,8 @@ typedef struct {
     int hp;
 } Inimigo;
 */
+
+// Isso de cima não é necessário
 
 // 1. Struct Pergunta com texto, 4 opcoes e a resposta correta
 typedef struct {
@@ -73,6 +76,12 @@ Pergunta* criarBancoPerguntas(int *qtdPerguntas) {
     return banco;
 }
 
+/*Faltou: void liberarBancoPerguntas(Pergunta *banco){
+    if (banco != NULL){
+        free(banco);
+    }
+}*/
+
 // 3, 4. Função void resolverTurno usando ponteiros
 // Se acertar -> diminui HP do Inimigo. Se errar -> diminui HP do Jogador (j->hp).
 void resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha) {
@@ -86,6 +95,22 @@ void resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha) {
         if (j->hp < 0) j->hp = 0;
     }
 }
+
+/*Correção: 
+// Retorna true se a batalha acabou (Alguém chegou a 0 HP)
+bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
+    int dano = 20;
+
+    if (escolha == p.respostaCorreta){
+        i->hp -= dano;
+        if (i->hp < 0) i->hp = 0;
+    } else{
+        j->hp -= dano;
+        if (j->hp < 0) j->hp = 0;
+    }
+    
+    return (j->hp == 0 || i->hp == 0);
+}*/
 
 // 5. Interface de combate usando Raylib (DrawText para mostrar pergunta e opções)
 void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i) {
@@ -108,3 +133,21 @@ void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i) {
 
     DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
 }
+
+/*Correção:
+void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
+    DrawText(TextFormat("Jogador: %s | HP: %d", j.nome, j.hp), 50, 40, 20, GREEN);
+    DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);
+
+    DrawRectangle(40, 300, 720, 250, LIGHTGRAY);
+    DrawRectangleLines(40, 300, 720, 250, DARKGRAY);
+
+    DrawText(p.texto, 60, 320, 20, BLACK);
+
+    DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
+    DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
+
+    DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
+}*/
