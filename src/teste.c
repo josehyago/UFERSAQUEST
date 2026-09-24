@@ -8,7 +8,7 @@
 #define MAPA_COLUNAS 35
 #define MAPA_TILE_SIZE 40 // Cada bloco terá 40x40 pixels na tela
 
-typedef struct {
+typedef struct{
     char nome[20];
     int hp;
     int score;
@@ -17,16 +17,15 @@ typedef struct {
     float velocidade;
 } Jogador;
 
-typedef struct {
+typedef struct{
     char nome[20];
     int hp;
-    int score;
     Vector2 pos;
     float tamanho;
     bool ativo; // Define se o inimigo ainda está vivo no mapa
 } Inimigo;
 
-typedef struct {
+typedef struct{
     char texto[200];
     char opcoes[4][100];
     int respostaCorreta; // Índice (0 a 3)
@@ -157,7 +156,6 @@ void inicializarJogador(Jogador *j, Vector2 posInicial){
 void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
     strcpy(i->nome, nome);
     i->hp = 60;
-    i->score = 0;
     i->pos = posInicial;
     i->tamanho = 30.0f;
     i->ativo = true;
@@ -228,6 +226,7 @@ bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
 
     if (escolha == p.respostaCorreta){
         i->hp -= dano;
+        j->score += 10; // Aumenta a pontuação do jogador por acertar
         if (i->hp < 0) i->hp = 0;
     } else{
         j->hp -= dano;
@@ -238,7 +237,7 @@ bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
 }
 
 void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
-    DrawText(TextFormat("Jogador: %s | HP: %d", j.nome, j.hp), 50, 40, 20, GREEN);
+    DrawText(TextFormat("Jogador: %s | HP: %d | Score: %d", j.nome, j.hp, j.score), 50, 40, 20, GREEN);
     DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);
 
     DrawRectangle(40, 300, 720, 250, LIGHTGRAY);
