@@ -1,10 +1,36 @@
 #include "raylib.h"
-#include "mapa.h"
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
 // Definimos o tamanho da nossa grade (matriz) e o tamanho de cada bloco (Tile) em pixels.
 #define MAPA_LINHAS 25
 #define MAPA_COLUNAS 35
 #define MAPA_TILE_SIZE 40 // Cada bloco terá 40x40 pixels na tela
+
+typedef struct {
+    char nome[20];
+    int hp;
+    int score;
+    Vector2 pos;
+    float tamanho;
+    float velocidade;
+} Jogador;
+
+typedef struct {
+    char nome[20];
+    int hp;
+    int score;
+    Vector2 pos;
+    float tamanho;
+    bool ativo; // Define se o inimigo ainda está vivo no mapa
+} Inimigo;
+
+typedef struct {
+    char texto[200];
+    char opcoes[4][100];
+    int respostaCorreta; // Índice (0 a 3)
+} Pergunta;
 
 // FUNÇÃO: inicializarMapa
 // OBJETIVO: Preencher a matriz com 0 (chão) e 1 (parede).
@@ -119,6 +145,118 @@ void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int 
     camera->target = (Vector2){ alvoX, alvoY };
 }
 
+void inicializarJogador(Jogador *j, Vector2 posInicial){
+    strcpy(j->nome, "Aluno");
+    j->hp = 100;
+    j->score = 0;
+    j->pos = posInicial;
+    j->tamanho = 30.0f;
+    j->velocidade = 4.0f;
+}
+
+void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
+    strcpy(i->nome, nome);
+    i->hp = 60;
+    i->score = 0;
+    i->pos = posInicial;
+    i->tamanho = 30.0f;
+    i->ativo = true;
+}
+
+void moverJogador(Jogador *j, int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
+    float posXAnterior = j->pos.x;
+
+    // Eixo X
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) j->pos.x += j->velocidade;
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))  j->pos.x -= j->velocidade;
+
+    Rectangle recX = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    if (checarColisaoComMapa(mapa, recX)) j->pos.x = posXAnterior;
+
+    float posYAnterior = j->pos.y;
+
+    // Eixo Y
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) j->pos.y += j->velocidade;
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))   j->pos.y -= j->velocidade;
+
+    Rectangle recY = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    if (checarColisaoComMapa(mapa, recY)) j->pos.y = posYAnterior;
+}
+
+Pergunta* criarBancoPerguntas(int *qtdPerguntas){
+    *qtdPerguntas = 3;
+    Pergunta *banco = (Pergunta*) malloc((*qtdPerguntas) * sizeof(Pergunta));
+
+    if (banco == NULL){
+        printf("Erro ao alocar memoria para as perguntas!\n");
+        return NULL;
+    }
+
+    strcpy(banco[0].texto, "Qual estrutura segue o conceito FIFO?");
+    strcpy(banco[0].opcoes[0], "1) Pilha");
+    strcpy(banco[0].opcoes[1], "2) Fila");
+    strcpy(banco[0].opcoes[2], "3) Arvore");
+    strcpy(banco[0].opcoes[3], "4) Grafo");
+    banco[0].respostaCorreta = 1; // Fila (índice 1)
+
+    strcpy(banco[1].texto, "Qual ponteiro usamos para alocar memoria em C?");
+    strcpy(banco[1].opcoes[0], "1) malloc");
+    strcpy(banco[1].opcoes[1], "2) printf");
+    strcpy(banco[1].opcoes[2], "3) scanf");
+    strcpy(banco[1].opcoes[3], "4) sizeof");
+    banco[1].respostaCorreta = 0; // malloc (índice 0)
+
+    strcpy(banco[2].texto, "Quantos bits tem 1 Byte?");
+    strcpy(banco[2].opcoes[0], "1) 4 bits");
+    strcpy(banco[2].opcoes[1], "2) 16 bits");
+    strcpy(banco[2].opcoes[2], "3) 8 bits");
+    strcpy(banco[2].opcoes[3], "4) 32 bits");
+    banco[2].respostaCorreta = 2; // 8 bits (índice 2)
+
+    return banco;
+}
+
+void liberarBancoPerguntas(Pergunta *banco){
+    if (banco != NULL){
+        free(banco);
+    }
+}
+
+// Retorna true se a batalha acabou (Alguém chegou a 0 HP)
+bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
+    int dano = 20;
+
+    if (escolha == p.respostaCorreta){
+        i->hp -= dano;
+        if (i->hp < 0) i->hp = 0;
+    } else{
+        j->hp -= dano;
+        if (j->hp < 0) j->hp = 0;
+    }
+    
+    return (j->hp == 0 || i->hp == 0);
+}
+
+void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
+    DrawText(TextFormat("Jogador: %s | HP: %d", j.nome, j.hp), 50, 40, 20, GREEN);
+    DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);
+
+    DrawRectangle(40, 300, 720, 250, LIGHTGRAY);
+    DrawRectangleLines(40, 300, 720, 250, DARKGRAY);
+
+    DrawText(p.texto, 60, 320, 20, BLACK);
+
+    DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
+    DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
+
+    DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
+}
+
+// Estados possíveis do jogo
+typedef enum { ESTADO_EXPLORACAO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
+
 int main(){
 
     const int larguraTela = 800;
@@ -134,65 +272,98 @@ int main(){
     // Inicializa a câmera usando o tamanho da janela
     Camera2D camera = criarCamera(larguraTela, alturaTela);
 
-    // Configurações do jogador
-    // Ele nasce na coordenada (40, 40), que é exatamente dentro do primeiro chão livre (linha 1, coluna 1).
-    Vector2 jogador = { 40.0f, 40.0f };
-    float velocidade = 4.0f;       // Anda 4 pixels a cada frame (loop)
-    float tamanhoJogador = 30.0f;  // É um pouco menor que o bloco (40) para passar fácil nas portas
+    // Inicializar Entidades
+    Jogador jogador;
+    inicializarJogador(&jogador, (Vector2){ 40.0f, 40.0f });
 
-    while (!WindowShouldClose()) {
+    Inimigo inimigo;
+    // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
+    inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
 
-        // LÓGICA DE MOVIMENTO E COLISÃO (EIXO X - HORIZONTAL)
-        float posXAnterior = jogador.x; // Guarda onde ele estava antes de tentar andar
+    // 3. Inicializar Combate
+    int qtdPerguntas;
+    Pergunta *bancoPerguntas = criarBancoPerguntas(&qtdPerguntas);
+    int perguntaAtual = 0;
 
-        if (IsKeyDown(KEY_RIGHT)) jogador.x += velocidade;
-        if (IsKeyDown(KEY_LEFT))  jogador.x -= velocidade;
+    EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
-        // Cria uma caixa para o jogador na nova posição e testa se ele bateu na matriz
-        Rectangle recJogadorX = { jogador.x, jogador.y, tamanhoJogador, tamanhoJogador };
-        if (checarColisaoComMapa(mapa, recJogadorX)) {
-            jogador.x = posXAnterior; // Se bateu na parede, desfazemos o passo horizontal
+    while (!WindowShouldClose()){
+
+        if (estadoAtual == ESTADO_EXPLORACAO){
+            
+            moverJogador(&jogador, mapa);
+            atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela);
+
+            // Checar se o jogador tocou no inimigo para iniciar a batalha
+            if (inimigo.ativo){
+                Rectangle recJogador = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
+                Rectangle recInimigo = { inimigo.pos.x, inimigo.pos.y, inimigo.tamanho, inimigo.tamanho };
+                
+                if (CheckCollisionRecs(recJogador, recInimigo)){
+                    estadoAtual = ESTADO_COMBATE; // Muda a tela
+                }
+            }
+            
+        } else if (estadoAtual == ESTADO_COMBATE){
+            
+            int escolha = -1;
+            if (IsKeyPressed(KEY_ONE)) escolha = 0;
+            if (IsKeyPressed(KEY_TWO)) escolha = 1;
+            if (IsKeyPressed(KEY_THREE)) escolha = 2;
+            if (IsKeyPressed(KEY_FOUR)) escolha = 3;
+
+            // Se o jogador pressionou uma resposta válida
+            if (escolha != -1){
+                bool acabou = resolverTurno(&jogador, &inimigo, bancoPerguntas[perguntaAtual], escolha);
+                
+                // Passa para a próxima pergunta se houver
+                perguntaAtual++;
+                if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0; // Volta ao início se acabarem as perguntas
+
+                if (acabou){
+                    if (jogador.hp <= 0){
+                        estadoAtual = ESTADO_GAMEOVER;
+                    } else if (inimigo.hp <= 0){
+                        inimigo.ativo = false; // Inimigo morre
+                        estadoAtual = ESTADO_EXPLORACAO; // Volta pro mapa
+                    }
+                }
+            }
         }
-
-        // LÓGICA DE MOVIMENTO E COLISÃO (EIXO Y - VERTICAL)
-        // Separar X de Y faz o personagem "deslizar" pela parede se você segurar duas setas ao mesmo tempo na diagonal.
-
-        float posYAnterior = jogador.y; // Guarda a posição antes de andar
-
-        if (IsKeyDown(KEY_DOWN)) jogador.y += velocidade;
-        if (IsKeyDown(KEY_UP))   jogador.y -= velocidade;
-
-        // Testa novamente a caixa, agora com a posição Y alterada
-        Rectangle recJogadorY = { jogador.x, jogador.y, tamanhoJogador, tamanhoJogador };
-        if (checarColisaoComMapa(mapa, recJogadorY)) {
-            jogador.y = posYAnterior; // Se bateu, desfazemos o passo vertical
-        }
-
-        // CÂMERA
-        // Agora que o jogador já se moveu (e foi barrado se necessário), mandamos a câmera segui-lo.
-        atualizarCamera(&camera, jogador, tamanhoJogador, larguraTela, alturaTela);
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-            // MUNDO DA CÂMERA
-            // Tudo desenhado entre BeginMode2D e EndMode2D é afetado pela câmera. Ou seja, se move conforme o jogador anda.
+        if (estadoAtual == ESTADO_EXPLORACAO){
             BeginMode2D(camera);
-                
-                desenharMapa(mapa); // Desenha o cenário primeiro (fica por baixo)
-                
-                // Desenha o jogador (um quadrado azul) por cima do mapa
-                DrawRectangleV(jogador, (Vector2){ tamanhoJogador, tamanhoJogador }, BLUE);
-                
-            EndMode2D();
 
-            // Tudo desenhado aqui (fora do Mode2D) fica grudado na tela.
-            // Ideal para interfaces, barras de vida, pontuação e textos.
-            DrawText("Controles: Setas do teclado", 10, 10, 20, BLACK);
+                desenharMapa(mapa);
+
+                // Desenha o jogador (Azul)
+                DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
+                
+                // Desenha o inimigo (Vermelho) se estiver vivo
+                if (inimigo.ativo){
+                    DrawRectangleV(inimigo.pos, (Vector2){ inimigo.tamanho, inimigo.tamanho }, RED);
+                }
+
+            EndMode2D();
+            
+            DrawText("Ande pelo mapa e encoste no quadrado VERMELHO!", 10, 10, 20, BLACK);
+
+        } else if (estadoAtual == ESTADO_COMBATE){
+            
+            desenharInterfaceCombate(bancoPerguntas[perguntaAtual], jogador, inimigo);
+            
+        } else if (estadoAtual == ESTADO_GAMEOVER){
+            DrawText("GAME OVER!", 300, 250, 40, RED);
+            DrawText("Você foi reprovado...", 300, 300, 20, DARKGRAY);
+        }
 
         EndDrawing();
     }
 
+    liberarBancoPerguntas(bancoPerguntas);
     CloseWindow();
     return 0;
 }
