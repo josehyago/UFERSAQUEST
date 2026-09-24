@@ -1,10 +1,9 @@
 #ifndef ENTIDADES_H
 #define ENTIDADES_H
 
-#include "raylib.h"
 #include "mapa.h"
 
-typedef struct {
+typedef struct{
     char nome[20];
     int hp;
     int score;
@@ -13,7 +12,7 @@ typedef struct {
     float velocidade;
 } Jogador;
 
-typedef struct {
+typedef struct{
     char nome[20];
     int hp;
     int score;

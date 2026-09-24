@@ -1,8 +1,4 @@
 #include "combate.h"
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "raylib.h"
 
 // O que adicionar aqui:
 // 1. Criar a 'struct Pergunta' com texto, um vetor de strings para as 4 opções, e a resposta correta.
