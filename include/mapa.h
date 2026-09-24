@@ -1,6 +1,7 @@
 // mapa.h
 #ifndef MAPA_H
 #define MAPA_H
+
 #include "raylib.h"
 
 // Definimos o tamanho da nossa grade (matriz) e o tamanho de cada bloco (Tile) em pixels.

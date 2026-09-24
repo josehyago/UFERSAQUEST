@@ -1,102 +1,368 @@
-#include <stdio.h>
 #include "raylib.h"
-// Aqui faremos os #include dos arquivos acima (mapa.h, entidades.h, combate.h)
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
-// ---------------------------------------------------------
-// TRABALHO CONJUNTO (Montagem do Jogo)
-// ---------------------------------------------------------
-// O que adicionar aqui:
-// 1. Criar a Enumeração (enum) dos estados: TELA_MENU, TELA_EXPLORACAO, TELA_COMBATE.
-// 2. Inicializar a janela da Raylib (InitWindow).
-// 3. Instanciar o jogador e o inimigo (usando as structs feitas no entidades.c).
-// 4. Criar o 'while (!WindowShouldClose())' (Game Loop).
-// 5. Fazer o switch(estadoAtual) e chamar as funções de desenhar mapa, mover jogador
-//    ou resolver combate dependendo da tela em que estamos.
+// Definimos o tamanho da nossa grade (matriz) e o tamanho de cada bloco (Tile) em pixels.
+#define MAPA_LINHAS 25
+#define MAPA_COLUNAS 35
+#define MAPA_TILE_SIZE 40 // Cada bloco terá 40x40 pixels na tela
 
-int main(void)
-{
+typedef struct{
+    char nome[20];
+    int hp;
+    int score;
+    Vector2 pos;
+    float tamanho;
+    float velocidade;
+} Jogador;
 
-    const int LARGURA_TELA = 800; 
-    const int ALTURA_TELA = 450;
-    // Para mudar o tamanho da tela é só mudar os valores aqui.
+typedef struct{
+    char nome[20];
+    int hp;
+    Vector2 pos;
+    float tamanho;
+    bool ativo; // Define se o inimigo ainda está vivo no mapa
+} Inimigo;
 
-    InitWindow(LARGURA_TELA, ALTURA_TELA, "UFERSAQUEST");
-    // InitWindow: inicializa a janela do programa, coloca-se a largura, altura e nome do programa.
+typedef struct{
+    char texto[200];
+    char opcoes[4][100];
+    int respostaCorreta; // Índice (0 a 3)
+} Pergunta;
 
-    Vector2 POSICAO_BOLA = { (float)LARGURA_TELA/2, (float)ALTURA_TELA/2 };
-    // Vector2: Estrutura do Raylib que guarda dois valores: x e y. Muito usado para posições 2D.
-    // Usamos (float) para converter a divisão inteira em um número decimal, garantindo precisão na tela.
-    // Ao dividirmos a largura e a altura da tela por 2, colocamos a bola exatamente no centro.
+// FUNÇÃO: inicializarMapa
+// OBJETIVO: Preencher a matriz com 0 (chão) e 1 (parede).
+// Como funciona: Ele percorre cada linha e coluna. Se for a borda do mapa, transforma em parede. O resto vira chão.
+void inicializarMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
+    for (int i = 0; i < MAPA_LINHAS; i++){
+        for(int j = 0; j < MAPA_COLUNAS; j++){
 
-    float RAIO_BOLA = 50.0f;
-    // Váriavel que guarda o raio da bola, para alterar o tamanho dela é só mudar o valor aqui. Para evitar ficar mudando lá no DrawCircleV.
-    Color COR_BOLA = MAROON;
-    // Color: Dá a cor.
-    // Váriavel que guardar a cor da bola. Para evitar ficar mudando lá no DrawCircleV.
-    float VELOCIDADE = 10.0f;
-    // Váriavel que guarda a velocidade da bola. Para evitar ficar mudando no if(ISKeyDown()).
+            // Checa se é a primeira linha (i==0), última linha (MAPA_LINHAS-1), primeira coluna (j==0) ou última coluna (MAPA_COLUNAS-1).
+            if(i == 0 || i == MAPA_LINHAS - 1 || j == 0 || j == MAPA_COLUNAS - 1){
+                mapa[i][j] = 1; // 1 representa a Parede/Borda
+            } else {
+                mapa[i][j] = 0; // 0 representa o Chão livre
+            }
+        }
+    }
+    
+    // Adicionando obstáculos manuais no meio do cenário.
+    mapa[5][5] = 1;
+    mapa[5][6] = 1;
+    mapa[10][15] = 1;
+}
 
-    SetTargetFPS(60);
-    // SetTargetFPS: Define a quantidade de quadros por segundo (FPS) que o programa vai rodar.
+// FUNÇÃO: desenharMapa
+// OBJETIVO: Ler a matriz e desenhar os quadrados coloridos na tela.
+void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
+    for (int i = 0; i < MAPA_LINHAS; i++){
+        for(int j = 0; j < MAPA_COLUNAS; j++){
 
-    while (!WindowShouldClose()){
-    // Loop principal que garante o funcionamento do programa.
-    // ! = Diferente; 
-    // WindowShouldClose: Checa se o usuário clicou no x ou ESC para que o programa feche.
+            // Converte a posição da matriz (índices 0, 1, 2...) para pixels na tela.
+            // Ex: coluna 2 * 40px = posição 80px no eixo X.
+            int posX = j * MAPA_TILE_SIZE;
+            int posY = i * MAPA_TILE_SIZE;
+            
+            // Desenha o bloco dependendo do número salvo na matriz
+            if(mapa[i][j] == 1){
+                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, DARKGRAY); // Parede escura
+            } else if(mapa[i][j] == 0){
+                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, LIGHTGRAY); // Chão claro
+            }
+            // Desenha as linhas de grade para facilitar a visualização
+            DrawRectangleLines(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, GRAY);
+        } 
+    }
+}
 
-        // Movimentação:
 
-        // Note que os "if"s abaixo não usam chaves { }. 
-        // Quando um "if" tem apenas uma instrução, as chaves são opcionais. 
+// FUNÇÃO: checarColisaoComMapa
+// OBJETIVO: Impedir que o jogador atravesse os blocos de valor "1".
+// RETORNA: 'true' se bateu em uma parede, 'false' se o caminho estiver livre.
+bool checarColisaoComMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle playerRec){
 
-        // IsKeyDown: Checa se a tecla especificada está sendo pressionada e mantida.
-        // O eixo X cresce para a direita. O eixo Y cresce para BAIXO.
-        if (IsKeyDown(KEY_RIGHT)) POSICAO_BOLA.x += VELOCIDADE; // Direita (Aumentamos porque o eixo x cresce pra direita)
-        if (IsKeyDown(KEY_LEFT)) POSICAO_BOLA.x -= VELOCIDADE; // Esquerda (Diminuimos porque o eixo x cresce pra direita)
-        if (IsKeyDown(KEY_UP)) POSICAO_BOLA.y -= VELOCIDADE; // Cima (Diminuimos porque o eixo y cresce pra baixo)
-        if (IsKeyDown(KEY_DOWN)) POSICAO_BOLA.y += VELOCIDADE; // Baixo (Aumentamos porque o eixo y cresce pra baixo)
+    // Em vez de checar todos os blocos do mapa, checamos apenas os blocos que estão imediatamente ao redor e debaixo do jogador.
+    // Convertendo a posição em pixels do jogador de volta para índices da matriz:
+    int minX = playerRec.x / MAPA_TILE_SIZE;
+    int minY = playerRec.y / MAPA_TILE_SIZE;
+    int maxX = (playerRec.x + playerRec.width) / MAPA_TILE_SIZE;
+    int maxY = (playerRec.y + playerRec.height) / MAPA_TILE_SIZE;
 
-        // Sistema de Colisão (Limites da tela):
+    // Vasculha apenas a área próxima ao jogador.
+    for (int i = minY; i <= maxY; i++){
+        for (int j = minX; j <= maxX; j++){
+            if (mapa[i][j] == 1){ // Se o bloco verificado for uma parede.
 
-        // Se a posição da bola passar do limite, nós a forçamos a ficar no limite máximo permitido.
-        // Detalhes: A posição X e Y da POSICAO_BOLA representa o centro dela;
-        // Se usássemos apenas "LARGURA_TELA" ou "0" como limite, metade da bola sairia da tela antes de parar.
-        // Para evitar isso, usamos o RAIO_BOLA em todos os lados.
+                // Cria um Rectangle para esse bloco de parede.
+                Rectangle bloco = { j * MAPA_TILE_SIZE, i * MAPA_TILE_SIZE, MAPA_TILE_SIZE, MAPA_TILE_SIZE };
+                
+                // A função CheckCollisionRecs da Raylib cruza as duas caixas (jogador e bloco).
+                // Se elas se sobrepuserem, houve colisão.
+                if (CheckCollisionRecs(playerRec, bloco)){
+                    return true; // Colisão confirmada. Interrompe a função.
+                }
+            }
+        }
+    }
+    return false; // Se o loop terminar sem achar parede, o caminho está livre.
+}
 
-        if (POSICAO_BOLA.x >= (LARGURA_TELA - RAIO_BOLA)) POSICAO_BOLA.x = LARGURA_TELA - RAIO_BOLA;
-        // Barreira da Direita: Limite é a LARGURA total menos a metade da bola (o raio).
-        // Se a bola tentar passar desse limite, nós a travamos nele.
-        
-        if (POSICAO_BOLA.x <= RAIO_BOLA) POSICAO_BOLA.x = RAIO_BOLA;
-        // Barreira da Esquerda: Limite é o próprio tamanho do raio.
-        // Impede que o X chegue a 0 ou fique negativo.
-        
-        if (POSICAO_BOLA.y >= (ALTURA_TELA - RAIO_BOLA)) POSICAO_BOLA.y = ALTURA_TELA - RAIO_BOLA;
-        // Barreira de Baixo: Limite é a ALTURA total menos a metade da bola (o raio).
-        // Se a bola tentar passar desse limite, nós a travamos nele.
-        
-        if (POSICAO_BOLA.y <= RAIO_BOLA) POSICAO_BOLA.y = RAIO_BOLA;
-        // Barreira de Cima: Limite é o próprio tamanho do raio.
-        // Impede que o Y chegue a 0 ou fique negativo.
+// FUNÇÃO: criarCamera
+// OBJETIVO: Configurar as propriedades iniciais da câmera 2D.
+Camera2D criarCamera(int larguraTela, int alturaTela){
+    Camera2D camera = { 0 };
 
-        BeginDrawing();
-        // BeginDrawing: Prepara a tela para desenhar o que for posto no código.
+    // O offset define onde o alvo da câmera vai ficar desenhado na sua tela.
+    // Colocando metade da largura e altura, garantimos que o jogador fique sempre no centro da janela.
+    camera.offset = (Vector2){ larguraTela / 2.0f, alturaTela / 2.0f };
+    camera.zoom = 1.0f; // Zoom normal (100%)
+    return camera;
+}
 
-        ClearBackground(RAYWHITE);
-        // ClearBackground: Define a cor do fundo.
+// FUNÇÃO: atualizarCamera
+// OBJETIVO: Fazer a câmera seguir o jogador, mas sem mostrar o vazio fora do mapa.
+void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int larguraTela, int alturaTela){
 
-        DrawText("Mova a bola com as seta", 10, 10, 20, DARKGRAY);
-        // DrawText: Desenha um texto na tela, coloca-se o texto, posição de x, y, tamanho da fonte e cor.
+    // Define que a câmera deve mirar exatamente no centro do quadrado do jogador
+    float alvoX = playerPos.x + (playerSize / 2);
+    float alvoY = playerPos.y + (playerSize / 2);
 
-        DrawCircleV(POSICAO_BOLA, RAIO_BOLA, COR_BOLA);
-        // DrawCircleV: Desenha um círculo usando um Vector2 para a posição, utiliza-se Posição(Vector2), Raio, Cor.
+    // Calcula os limites máximos que a câmera pode ir sem revelar o que está fora da matriz.
+    // Ex: Ela não pode ir mais para a esquerda do que a metade da sua tela.
+    float minX = larguraTela / 2.0f;
+    float maxX = (MAPA_COLUNAS * MAPA_TILE_SIZE) - (larguraTela / 2.0f);
+    float minY = alturaTela / 2.0f;
+    float maxY = (MAPA_LINHAS * MAPA_TILE_SIZE) - (alturaTela / 2.0f);
 
-        EndDrawing();
-        // EndDrawing: Finaliza a renderização e exibe o desenho na tela.
+    if (alvoX < minX) alvoX = minX;
+    if (alvoX > maxX) alvoX = maxX;
+    if (alvoY < minY) alvoY = minY;
+    if (alvoY > maxY) alvoY = maxY;
+
+    // Atualiza o alvo final da câmera após as correções.
+    camera->target = (Vector2){ alvoX, alvoY };
+}
+
+void inicializarJogador(Jogador *j, Vector2 posInicial){
+    strcpy(j->nome, "Caloura");
+    j->hp = 100;
+    j->score = 0;
+    j->pos = posInicial;
+    j->tamanho = 30.0f;
+    j->velocidade = 4.0f;
+}
+
+void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
+    strcpy(i->nome, nome);
+    i->hp = 60;
+    i->pos = posInicial;
+    i->tamanho = 30.0f;
+    i->ativo = true;
+}
+
+void moverJogador(Jogador *j, int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
+    float posXAnterior = j->pos.x;
+
+    // Eixo X
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) j->pos.x += j->velocidade;
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))  j->pos.x -= j->velocidade;
+
+    Rectangle recX = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    if (checarColisaoComMapa(mapa, recX)) j->pos.x = posXAnterior;
+
+    float posYAnterior = j->pos.y;
+
+    // Eixo Y
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S)) j->pos.y += j->velocidade;
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))   j->pos.y -= j->velocidade;
+
+    Rectangle recY = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    if (checarColisaoComMapa(mapa, recY)) j->pos.y = posYAnterior;
+}
+
+Pergunta* criarBancoPerguntas(int *qtdPerguntas){
+    *qtdPerguntas = 3;
+    Pergunta *banco = (Pergunta*) malloc((*qtdPerguntas) * sizeof(Pergunta));
+
+    if (banco == NULL){
+        printf("Erro ao alocar memoria para as perguntas!\n");
+        return NULL;
     }
 
-    CloseWindow();
-    // CloseWindow: Fecha a janela do programa e libera a memória alocada.
+    strcpy(banco[0].texto, "Qual estrutura segue o conceito FIFO?");
+    strcpy(banco[0].opcoes[0], "1) Pilha");
+    strcpy(banco[0].opcoes[1], "2) Fila");
+    strcpy(banco[0].opcoes[2], "3) Arvore");
+    strcpy(banco[0].opcoes[3], "4) Grafo");
+    banco[0].respostaCorreta = 1; // Fila (índice 1)
 
+    strcpy(banco[1].texto, "Qual ponteiro usamos para alocar memoria em C?");
+    strcpy(banco[1].opcoes[0], "1) malloc");
+    strcpy(banco[1].opcoes[1], "2) printf");
+    strcpy(banco[1].opcoes[2], "3) scanf");
+    strcpy(banco[1].opcoes[3], "4) sizeof");
+    banco[1].respostaCorreta = 0; // malloc (índice 0)
+
+    strcpy(banco[2].texto, "Quantos bits tem 1 Byte?");
+    strcpy(banco[2].opcoes[0], "1) 4 bits");
+    strcpy(banco[2].opcoes[1], "2) 16 bits");
+    strcpy(banco[2].opcoes[2], "3) 8 bits");
+    strcpy(banco[2].opcoes[3], "4) 32 bits");
+    banco[2].respostaCorreta = 2; // 8 bits (índice 2)
+
+    return banco;
+}
+
+void liberarBancoPerguntas(Pergunta *banco){
+    if (banco != NULL){
+        free(banco);
+    }
+}
+
+// Retorna true se a batalha acabou (Alguém chegou a 0 HP)
+bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
+    int dano = 20;
+
+    if (escolha == p.respostaCorreta){
+        i->hp -= dano;
+        j->score += 10; // Aumenta a pontuação do jogador por acertar
+        if (i->hp < 0) i->hp = 0;
+    } else{
+        j->hp -= dano;
+        if (j->hp < 0) j->hp = 0;
+    }
+    
+    return (j->hp == 0 || i->hp == 0);
+}
+
+void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
+    DrawText(TextFormat("Jogador: %s | HP: %d | Score: %d", j.nome, j.hp, j.score), 50, 40, 20, GREEN);
+    DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);
+
+    DrawRectangle(40, 300, 720, 250, LIGHTGRAY);
+    DrawRectangleLines(40, 300, 720, 250, DARKGRAY);
+
+    DrawText(p.texto, 60, 320, 20, BLACK);
+
+    DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
+    DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
+    DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
+
+    DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
+}
+
+// Estados possíveis do jogo
+typedef enum { ESTADO_EXPLORACAO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
+
+int main(){
+
+    const int larguraTela = 800;
+    const int alturaTela = 600;
+
+    InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
+    SetTargetFPS(60);
+
+    // Cria a matriz e chama a função para preencher ela com paredes e chão
+    int mapa[MAPA_LINHAS][MAPA_COLUNAS];
+    inicializarMapa(mapa);
+
+    // Inicializa a câmera usando o tamanho da janela
+    Camera2D camera = criarCamera(larguraTela, alturaTela);
+
+    // Inicializar Entidades
+    Jogador jogador;
+    inicializarJogador(&jogador, (Vector2){ 40.0f, 40.0f });
+
+    Inimigo inimigo;
+    // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
+    inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
+
+    // 3. Inicializar Combate
+    int qtdPerguntas;
+    Pergunta *bancoPerguntas = criarBancoPerguntas(&qtdPerguntas);
+    int perguntaAtual = 0;
+
+    EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
+
+    while (!WindowShouldClose()){
+
+        if (estadoAtual == ESTADO_EXPLORACAO){
+            
+            moverJogador(&jogador, mapa);
+            atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela);
+
+            // Checar se o jogador tocou no inimigo para iniciar a batalha
+            if (inimigo.ativo){
+                Rectangle recJogador = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
+                Rectangle recInimigo = { inimigo.pos.x, inimigo.pos.y, inimigo.tamanho, inimigo.tamanho };
+                
+                if (CheckCollisionRecs(recJogador, recInimigo)){
+                    estadoAtual = ESTADO_COMBATE; // Muda a tela
+                }
+            }
+            
+        } else if (estadoAtual == ESTADO_COMBATE){
+            
+            int escolha = -1;
+            if (IsKeyPressed(KEY_ONE)) escolha = 0;
+            if (IsKeyPressed(KEY_TWO)) escolha = 1;
+            if (IsKeyPressed(KEY_THREE)) escolha = 2;
+            if (IsKeyPressed(KEY_FOUR)) escolha = 3;
+
+            // Se o jogador pressionou uma resposta válida
+            if (escolha != -1){
+                bool acabou = resolverTurno(&jogador, &inimigo, bancoPerguntas[perguntaAtual], escolha);
+                
+                // Passa para a próxima pergunta se houver
+                perguntaAtual++;
+                if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0; // Volta ao início se acabarem as perguntas
+
+                if (acabou){
+                    if (jogador.hp <= 0){
+                        estadoAtual = ESTADO_GAMEOVER;
+                    } else if (inimigo.hp <= 0){
+                        inimigo.ativo = false; // Inimigo morre
+                        estadoAtual = ESTADO_EXPLORACAO; // Volta pro mapa
+                    }
+                }
+            }
+        }
+
+        BeginDrawing();
+        ClearBackground(RAYWHITE);
+
+        if (estadoAtual == ESTADO_EXPLORACAO){
+            BeginMode2D(camera);
+
+                desenharMapa(mapa);
+
+                // Desenha o jogador (Azul)
+                DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
+                
+                // Desenha o inimigo (Vermelho) se estiver vivo
+                if (inimigo.ativo){
+                    DrawRectangleV(inimigo.pos, (Vector2){ inimigo.tamanho, inimigo.tamanho }, RED);
+                }
+
+            EndMode2D();
+            
+            DrawText("Ande pelo mapa e encoste no quadrado VERMELHO!", 10, 10, 20, BLACK);
+
+        } else if (estadoAtual == ESTADO_COMBATE){
+            
+            desenharInterfaceCombate(bancoPerguntas[perguntaAtual], jogador, inimigo);
+            
+        } else if (estadoAtual == ESTADO_GAMEOVER){
+            DrawText("GAME OVER!", 300, 250, 40, RED);
+            DrawText("Você foi reprovado...", 300, 300, 20, DARKGRAY);
+        }
+
+        EndDrawing();
+    }
+
+    liberarBancoPerguntas(bancoPerguntas);
+    CloseWindow();
     return 0;
 }
