@@ -29,6 +29,7 @@ typedef struct{
     char texto[200];
     char opcoes[4][100];
     int respostaCorreta; // Índice (0 a 3)
+    bool opcaoOculta[4]; // Controla quais opções sumiram após errar
 } Pergunta;
 
 // FUNÇÃO: inicializarMapa
@@ -211,6 +212,13 @@ Pergunta* criarBancoPerguntas(int *qtdPerguntas){
     strcpy(banco[2].opcoes[3], "4) 32 bits");
     banco[2].respostaCorreta = 2; // 8 bits (índice 2)
 
+    // Garantir que todas as opções comecem visíveis
+    for(int i = 0; i < *qtdPerguntas; i++){
+        for(int j = 0; j < 4; j++){
+            banco[i].opcaoOculta[j] = false;
+        }
+    }
+
     return banco;
 }
 
@@ -221,16 +229,27 @@ void liberarBancoPerguntas(Pergunta *banco){
 }
 
 // Retorna true se a batalha acabou (Alguém chegou a 0 HP)
-bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
+// Processa o resultado da resposta, oculta a opção em caso de erro e prepara os textos
+bool resolverTurno(Jogador *j, Inimigo *i, Pergunta *p, int escolha, char *mensagem, Color *corMensagem, bool *mudarPergunta){
     int dano = 20;
 
-    if (escolha == p.respostaCorreta){
+    if (escolha == p->respostaCorreta){
         i->hp -= dano;
-        j->score += 10; // Aumenta a pontuação do jogador por acertar
         if (i->hp < 0) i->hp = 0;
+        j->score += 10; // Aumenta a pontuação do jogador por acertar
+
+        strcpy(mensagem, "RESPOSTA CORRETA! Dano no chefe!");
+        *corMensagem = GREEN;
+        *mudarPergunta = true; // Avança para a próxima pergunta
     } else{
         j->hp -= dano;
         if (j->hp < 0) j->hp = 0;
+
+        p->opcaoOculta[escolha] = true; // Esconde a opção errada escolhida
+
+        strcpy(mensagem, "ERROU! Voce sofreu dano!");
+        *corMensagem = RED;
+        *mudarPergunta = false; // Continua na mesma pergunta
     }
     
     return (j->hp == 0 || i->hp == 0);
@@ -245,10 +264,11 @@ void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
 
     DrawText(p.texto, 60, 320, 20, BLACK);
 
-    DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
-    DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
-    DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
-    DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
+    // Só desenha se não estiver oculta
+    if (!p.opcaoOculta[0]) DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
+    if (!p.opcaoOculta[1]) DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
+    if (!p.opcaoOculta[2]) DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
+    if (!p.opcaoOculta[3]) DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
 
     DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
 }
@@ -273,16 +293,22 @@ int main(){
 
     // Inicializar Entidades
     Jogador jogador;
-    inicializarJogador(&jogador, (Vector2){ 40.0f, 40.0f });
+    inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
 
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
     inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
 
-    // 3. Inicializar Combate
+    // Inicializar Combate
     int qtdPerguntas;
     Pergunta *bancoPerguntas = criarBancoPerguntas(&qtdPerguntas);
     int perguntaAtual = 0;
+
+    // Variáveis de Controle do Combate e Tempo
+    float tempoMensagem = 0.0f;
+    char mensagemCombate[100] = "";
+    Color corMensagem = BLANK;
+    bool mudarPergunta = false;
 
     EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
@@ -305,27 +331,38 @@ int main(){
             
         } else if (estadoAtual == ESTADO_COMBATE){
             
-            int escolha = -1;
-            if (IsKeyPressed(KEY_ONE)) escolha = 0;
-            if (IsKeyPressed(KEY_TWO)) escolha = 1;
-            if (IsKeyPressed(KEY_THREE)) escolha = 2;
-            if (IsKeyPressed(KEY_FOUR)) escolha = 3;
+            // Se o temporizador está ativo, aguarda 2 segundos exibindo a mensagem
+            if (tempoMensagem > 0){
+                tempoMensagem -= GetFrameTime();
 
-            // Se o jogador pressionou uma resposta válida
-            if (escolha != -1){
-                bool acabou = resolverTurno(&jogador, &inimigo, bancoPerguntas[perguntaAtual], escolha);
-                
-                // Passa para a próxima pergunta se houver
-                perguntaAtual++;
-                if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0; // Volta ao início se acabarem as perguntas
-
-                if (acabou){
+                if (tempoMensagem <= 0){
                     if (jogador.hp <= 0){
                         estadoAtual = ESTADO_GAMEOVER;
                     } else if (inimigo.hp <= 0){
-                        inimigo.ativo = false; // Inimigo morre
-                        estadoAtual = ESTADO_EXPLORACAO; // Volta pro mapa
+                        inimigo.ativo = false;
+                        estadoAtual = ESTADO_EXPLORACAO;
+                    } else if (mudarPergunta){
+                        perguntaAtual++;
+                        if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0;
+                        mudarPergunta = false;
                     }
+                }
+            } else {
+                // Leitura dos botões de resposta
+                int escolha = -1;
+                if (IsKeyPressed(KEY_ONE)) escolha = 0;
+                if (IsKeyPressed(KEY_TWO)) escolha = 1;
+                if (IsKeyPressed(KEY_THREE)) escolha = 2;
+                if (IsKeyPressed(KEY_FOUR)) escolha = 3;
+
+                // Processa apenas escolhas válidas e não ocultas
+                if (escolha != -1 && !bancoPerguntas[perguntaAtual].opcaoOculta[escolha]){
+                    
+                    // Executa a lógica de rodada via função
+                    resolverTurno(&jogador, &inimigo, &bancoPerguntas[perguntaAtual], escolha, mensagemCombate, &corMensagem, &mudarPergunta);
+
+                    // Ativa a pausa de 2 segundos para o jogador ler o resultado
+                    tempoMensagem = 2.0f;
                 }
             }
         }
@@ -353,6 +390,12 @@ int main(){
         } else if (estadoAtual == ESTADO_COMBATE){
             
             desenharInterfaceCombate(bancoPerguntas[perguntaAtual], jogador, inimigo);
+
+            if (tempoMensagem > 0){
+                DrawRectangle(0, 200, larguraTela, 80, Fade(BLACK, 0.7f));
+                int tamanhoTexto = MeasureText(mensagemCombate, 30);
+                DrawText(mensagemCombate, (larguraTela - tamanhoTexto) / 2, 225, 30, corMensagem);
+            }
             
         } else if (estadoAtual == ESTADO_GAMEOVER){
             DrawText("GAME OVER!", 300, 250, 40, RED);
