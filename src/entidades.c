@@ -15,94 +15,43 @@
 //    para impedir que ele ande por cima do número 1 (paredes).
 
 
-typedef struct{
-    float x;              
-    float y;               
-} Vector2; //Não é necessario
-
-typedef struct{
-    Vector2 pos;
-} Posicao; //Não é necessario
 
 typedef struct{
     char nome [10];
-    int HP;
-    int score;
-    Vector2 pos;
-} Jogador;
-
-/* typedef struct{
-    char nome[20];
     int hp;
     int score;
     Vector2 pos;
     float tamanho;
     float velocidade;
 } Jogador;
-*/
+
+
 
 typedef struct{
-    char nome [10];
-    int HP;
-    int score;
+    char nome [20];
+    int hp;
+    float tamanho;
     Vector2 pos;
+    bool ativo; // define se está vivo ou morto
 } Inimigo; 
 
-/*typedef struct{
-    char nome[20];
-    int hp;
-    int score;
-    Vector2 pos;
-    float tamanho;
-    bool ativo; // Define se o inimigo ainda está vivo no mapa
-} Inimigo;
- */
-
-/*Faltou: 
-void inicializarJogador(Jogador *j, Vector2 posInicial);
-void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome);
-*/
-
-void moverJogador ( Jogador *jogador, int matrizMapa [LINHA][COLUNA]){
-    int linhaAtual= jogador -> pos.y; // posição do jogador no eixo y
-    int colunaAtual =  jogador -> pos.x; // posição do jogador no eixo x;
-
-    int novaLinha= linhaAtual; // Atualização do antiga posição. A novaLinha e novaColuna são variáveis temporáveis
-    int novaColuna= colunaAtual;
-        
-    if (IsKeyPressed (KEY_S)) novaLinha ++; // Teclas sendo pressionadas
-    if (IsKeyPressed (KEY_A)) novaColuna --;
-    if (IsKeyPressed (KEY_W)) novaLinha --;
-    if (IsKeyPressed (KEY_D)) novaColuna ++;
-
-    // Irá verificar se o mapa não encontrou uma parede. Se não,
-    // irá dá prosseguimento ao movimento do jogador. 
-
-    if (matrizMapa [novaLinha][novaColuna]!=1){
-        jogador -> pos.y= novaLinha;
-        jogador -> pos.x = novaColuna;
-          }
-    }
-
-/*void inicializarJogador(Jogador *j, Vector2 posInicial){
-    strcpy(j->nome, "Aluno");
-    j->hp = 100;
-    j->score = 0;
-    j->pos = posInicial;
-    j->tamanho = 30.0f;
-    j->velocidade = 4.0f;
+void inicializarJogador (Jogador *j, Vector2 posInicial){
+    strcpy (j-> nome, "Florzinha");
+    j-> hp=100;
+    j -> score=0;
+    j -> tamanho = 30.0f;
+    j -> pos= posInicial;
+    j -> velocidade= 4.0f;
 }
 
 void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
-    strcpy(i->nome, nome);
-    i->hp = 60;
-    i->score = 0;
-    i->pos = posInicial;
-    i->tamanho = 30.0f;
-    i->ativo = true;
+    strcpy ( i -> nome, "Bug de C");
+    i -> hp=100;
+    i -> tamanho = 30.0f;
+    i -> pos = posInicial;
+    i -> ativo = true;
 }
 
-* Essa função de mover jogador precisava das funções que eu fiz no mapa
 void moverJogador(Jogador *j, int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
     float posXAnterior = j->pos.x;
 
@@ -121,21 +70,4 @@ void moverJogador(Jogador *j, int mapa[MAPA_LINHAS][MAPA_COLUNAS]){
 
     Rectangle recY = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
     if (checarColisaoComMapa(mapa, recY)) j->pos.y = posYAnterior;
-}
-    
-*/
-
-// Isso aqui de baixo apaga tudo.
-int main (){
-
-    // outras funções aqui:
-
-
-
-While (!WindowShouldClose()){
-     
-    moverJogador (&jogador, matrizMapa); // Chamar o mover jogador 
-       
-    }
-
 }
