@@ -1,22 +1,14 @@
 #include "combate.h"
 
-// O que adicionar aqui:
-// 1. Criar a 'struct Pergunta' com texto, um vetor de strings para as 4 opções, e a resposta correta.
-// 2. Usar alocação dinâmica (malloc) para criar um banco de perguntas de disciplinas do curso.
-// 3. Criar a função bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha).
-// 4. Fazer a lógica: Se a escolha bater com a resposta certa, diminuir HP do Inimigo.
-//    Se errar, diminuir HP do Jogador usando os ponteiros (j->hp).
-// 5. Fazer a interface de combate usando Raylib (DrawText para mostrar a pergunta e opções).
-
 // 1. Struct Pergunta com texto, 4 opcoes e a resposta correta
-typedef struct {
+typedef struct{
     char texto[200];
     char opcoes[4][100];
     int respostaCorreta; // Indice da resposta certa (ex: 0, 1, 2 ou 3)
 } Pergunta;
 
 // 2. Função que usa alocação dinâmica (malloc) para criar o banco de perguntas
-Pergunta* criarBancoPerguntas(int *qtdPerguntas) {
+Pergunta* criarBancoPerguntas(int *qtdPerguntas){
     *qtdPerguntas = 3; // Definindo quantidade de perguntas de disciplinas
 
     // Alocando espaço na memória usando malloc
@@ -78,7 +70,7 @@ bool resolverTurno(Jogador *j, Inimigo *i, Pergunta p, int escolha){
 }
 
 // 5. Interface de combate usando Raylib (DrawText para mostrar pergunta e opções)
-void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i) {
+void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
     // Exibindo HP dos personagens
     DrawText(TextFormat("Jogador: %s | HP: %d | Score: %d", j.nome, j.hp, j.score), 50, 40, 20, GREEN);
     DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);

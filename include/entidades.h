@@ -2,23 +2,27 @@
 #define ENTIDADES_H
 
 #include "mapa.h"
+#include <stdio.h>
+#include <string.h>
 
+// Cria as características do jogador
 typedef struct{
     char nome[20];
-    int hp;
-    int score;
-    Vector2 pos;
-    float tamanho;
-    float velocidade;
+    int hp; // pontos de vida
+    int score; // pontuação atual do jogador
+    Vector2 pos; // posição (x,y) do jogador na tela 
+    float tamanho; // dimensão física do jogador (largura e altura do quadrado de colisão)
+    float velocidade; // quantidade de pixels que o jogador se move por frame
 } Jogador;
 
+// Cria as características do inimigo
 typedef struct{
     char nome[20];
     int hp;
     int score;
     Vector2 pos;
     float tamanho;
-    bool ativo; // Define se o inimigo ainda está vivo no mapa
+    bool ativo; // flag booleana: true se o inimigo estiver vivo, false se for derrotado
 } Inimigo;
 
 // Funções

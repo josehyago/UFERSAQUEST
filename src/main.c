@@ -145,7 +145,7 @@ void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int 
 }
 
 void inicializarJogador(Jogador *j, Vector2 posInicial){
-    strcpy(j->nome, "Caloura");
+    strcpy(j->nome, "Florzinha");
     j->hp = 100;
     j->score = 0;
     j->pos = posInicial;
