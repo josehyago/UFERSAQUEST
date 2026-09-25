@@ -45,13 +45,17 @@ Detalhes do escopo do projeto como um todo.
 ...
 
 **Gameplay**
-Um resumo de como funcionará o jogo a nível de gameplay.
+
+- Um resumo de como funcionará o jogo a nível de gameplay.
 
 Protótipo - Unidade 1:
 
-1 mapa pequeno (Entrada/Portão Principal da UFERSA).
+1 mapa pequeno.
+
 Movimentação da personagem em 4 direções travada por colisões de parede.
-1 tipo de inimigo ("Cálculo").
+
+1 tipo de inimigo ("Bug de C").
+
 1 tela de combate funcional acionada ao encostar no inimigo, exibindo uma pergunta e recebendo a resposta.
 
 ---
