@@ -12,12 +12,15 @@ Informações gerais sobre o projeto.
 **Resumo do projeto**
 
 - Do que se trata o projeto? Tipo de jogo?
+
 Jogo 2D top-down educativo/RPG onde uma caloura é transportada para uma dimensão sombria da UFERSA e precisa enfrentar desafios das disciplinas para conseguir escapar. 
 
 - Qual o gênero?
+
 RPG Top-Down 2D / Quiz Educativo por Turnos. 
 
 - Pretende lançar para quais plataformas?
+ 
 PC (Windows/Linux) — desenvolvido em C com a biblioteca Raylib.
 
 ---
@@ -38,12 +41,14 @@ Detalhes do escopo do projeto como um todo.
 **Referências**
 
 - Jogos, filmes, séries, que compõem referências deste projeto.
+
 ...
 
 **Gameplay**
 Um resumo de como funcionará o jogo a nível de gameplay.
 
 Protótipo - Unidade 1:
+
 1 mapa pequeno (Entrada/Portão Principal da UFERSA).
 Movimentação da personagem em 4 direções travada por colisões de parede.
 1 tipo de inimigo ("Cálculo").
@@ -57,12 +62,15 @@ Informações gerais sobre as mecânicas do jogo.
 **Mecânicas do Player**
 
 - Movimentação
+
 Movimentação por grade (baseada na matriz do mapa).
 
-- Encontro/Colisão 
+- Encontro/Colisão
+ 
 Quando os colisores de área do jogador e do inimigo se cruzarem, o jogo transita para o estado TELA_COMBATE.
 
 - Combate por turnos
+
 O inimigo ataca se o jogador errar a pergunta; o jogador ataca o inimigo se acertar a pergunta.
 
 ---
@@ -71,12 +79,15 @@ O inimigo ataca se o jogador errar a pergunta; o jogador ataca o inimigo se acer
 Informações de toda a narrativa do projeto.
 
 - Sinopse
+
 Resumo da história do jogo.
 
 - História (Detalhada)
+
 História em detalhes.
 
 - Personagens
+
 História de cada personagem.
 
 ---
