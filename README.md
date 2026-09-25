@@ -28,7 +28,7 @@ PC (Windows/Linux) — desenvolvido em C com a biblioteca Raylib.
 ## CONTROLES
 
 | Teclado | Mouse | Ação |
-| :--- | :---: | ---: |
+| :---: | :---: | :---: |
 | **WASD/SETAS** | - | Movimentação do personagem no mapa (4 direções: Cima, Baixo, Esquerda, Direita) |
 | **1, 2, 3, 4** | - | Selecionar a resposta da pergunta durante a tela de combate |
 | **ESC** | - | Pausar ou voltar ao menu inicial |
