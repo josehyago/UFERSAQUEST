@@ -1,0 +1,5 @@
+{
+    "code-runner.executorMap": {
+        "c": "cd $dir ; gcc *.c -o ../build/$fileNameWithoutExt.exe -I ../include -lraylib -lopengl32 -lgdi32 -lwinmm ; if ($?) { ../build/$fileNameWithoutExt.exe } ; Remove-Item -Path ../build/$fileNameWithoutExt.exe -ErrorAction SilentlyContinue"
+    }
+}
