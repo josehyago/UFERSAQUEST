@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 // Definimos o tamanho da nossa grade (matriz) e o tamanho de cada bloco (Tile) em pixels.
 #define MAPA_LINHAS 25
