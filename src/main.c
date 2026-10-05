@@ -9,8 +9,9 @@ int main(){
     SetTargetFPS(60);
 
     // Cria a matriz e chama a função para preencher ela com paredes e chão
-    int mapa[MAPA_LINHAS][MAPA_COLUNAS];
-    inicializarMapa(mapa);
+    int linhas = 0, colunas = 0;
+    int faseAtual = 1;
+    int **mapa = inicializarMapa("./mapa1.txt", &linhas, &colunas);
 
     // Inicializa a câmera usando o tamanho da janela
     Camera2D camera = criarCamera(larguraTela, alturaTela);
@@ -40,11 +41,15 @@ int main(){
 
         if (estadoAtual == ESTADO_EXPLORACAO){
             
-            moverJogador(&jogador, mapa);
-            atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela);
+            moverJogador(&jogador, mapa, linhas, colunas);
+
+            // Checar a troca de fase (Atualiza o ponteiro do mapa se ele pisar na porta)
+            mapa = checarTransicaoDeFase(mapa, &linhas, &colunas, &jogador, &faseAtual);
+
+            atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela, linhas, colunas);
 
             // Checar se o jogador tocou no inimigo para iniciar a batalha
-            if (inimigo.ativo){
+            if (inimigo.ativo && faseAtual == 1){
                 Rectangle recJogador = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
                 Rectangle recInimigo = { inimigo.pos.x, inimigo.pos.y, inimigo.tamanho, inimigo.tamanho };
                 
@@ -97,13 +102,13 @@ int main(){
         if (estadoAtual == ESTADO_EXPLORACAO){
             BeginMode2D(camera);
 
-                desenharMapa(mapa);
+                desenharMapa(mapa, linhas, colunas);
 
                 // Desenha o jogador (Azul)
                 DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
-                if (inimigo.ativo){
+                if (inimigo.ativo && faseAtual == 1){
                     DrawRectangleV(inimigo.pos, (Vector2){ inimigo.tamanho, inimigo.tamanho }, RED);
                 }
 
@@ -129,6 +134,7 @@ int main(){
         EndDrawing();
     }
 
+    liberarMapa(mapa, linhas);
     liberarBancoPerguntas(bancoPerguntas);
     CloseWindow();
     return 0;

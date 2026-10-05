@@ -8,9 +8,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-// Definimos o tamanho da nossa grade (matriz) e o tamanho de cada bloco (Tile) em pixels.
-#define MAPA_LINHAS 25
-#define MAPA_COLUNAS 35
+// Definimos de cada bloco (Tile) em pixels.
 #define MAPA_TILE_SIZE 40 // Cada bloco terá 40x40 pixels na tela
 
 // Cria as características do jogador
@@ -45,18 +43,20 @@ typedef struct{
 typedef enum { ESTADO_EXPLORACAO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
 
 // Funções do mapa
-void inicializarMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS]);
-void desenharMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS]);
-bool checarColisaoComMapa(int mapa[MAPA_LINHAS][MAPA_COLUNAS], Rectangle playerRec);
+int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas);
+void liberarMapa(int **vetor_mapa, int linhas);
+void desenharMapa(int **vetor_mapa, int linhas, int colunas);
+bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle playerRec);
+int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador *j, int *faseAtual);
 
 // Funções de Câmera
 Camera2D criarCamera(int larguraTela, int alturaTela);
-void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int larguraTela, int alturaTela);
+void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int larguraTela, int alturaTela, int linhas, int colunas);
 
 // Funções de entidades
 void inicializarJogador(Jogador *j, Vector2 posInicial);
 void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome);
-void moverJogador(Jogador *j, int mapa[MAPA_LINHAS][MAPA_COLUNAS]);
+void moverJogador(Jogador *j, int **mapa, int linhas, int colunas);
 
 // Funções de combate
 Pergunta* criarBancoPerguntas(int *qtdPerguntas);
