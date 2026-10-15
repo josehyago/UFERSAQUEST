@@ -18,8 +18,12 @@ typedef struct{
     Vector2 pos; 
     float tamanho; 
     float velocidade; 
-    
-    // NOVIDADE: O jogador agora tem um vetor de Structs como Inventário.
+    Texture2D textura; // para o desenho do jogador
+    float frame; // para animação do jogador
+    int contador; // contador de tempo para animação
+    bool estaAndando; // flag para saber se o jogador está andando ou parado
+    float direcaoOlhar; // direção que o jogador está olhando (1.0f para direita, -1.0f para esquerda)
+     // NOVIDADE: O jogador agora tem um vetor de Structs como Inventário.
     Item inventario[10]; // Mochila com 10 espaços máximos.
     int qtdItens; // Controle de quantos itens ele já pegou.
 } Jogador;

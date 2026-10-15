@@ -4,8 +4,10 @@ int main(){
 
     
 
-    const int larguraTela = 1800;
-    const int alturaTela = 1000;
+    const int larguraTela = 800;
+    const int alturaTela = 600;
+
+ 
 
     InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
     SetTargetFPS(60);
@@ -30,7 +32,12 @@ int main(){
     inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
     
     // Carrega a textura do jogador
-    Jogador.textura = LoadTexture("personagem.png");
+    jogador.textura = LoadTexture("imagens/personagem.png");
+    // inicializar variáveis de controle do jogador
+    jogador.frame = 0;
+    jogador.contador = 0;
+    jogador.estaAndando = false;
+    jogador.direcaoOlhar = 1.0f;
 
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
@@ -50,6 +57,8 @@ int main(){
     EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
     while (!WindowShouldClose()){
+        int contadorAnimacao = 0;
+        int frameAnimacao = 0;
 
         if (estadoAtual == ESTADO_EXPLORACAO){
             
@@ -108,17 +117,18 @@ int main(){
             }
         }
 
+       
+
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
         if (estadoAtual == ESTADO_EXPLORACAO){
+    
             BeginMode2D(camera);
 
                 desenharMapa(mapa, linhas, colunas);
-
-                // Desenha o jogador (Azul)
-                DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
-                
+                // Desenha o jogador com animação
+                desenharJogador(jogador, &contadorAnimacao, &frameAnimacao);
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
                 if (inimigo.ativo && faseAtual == 1){
@@ -150,6 +160,7 @@ int main(){
 
     liberarMapa(mapa, linhas);
     liberarBancoPerguntas(bancoPerguntas);
+    UnloadTexture(jogador.textura); // descarregar jogador
     CloseWindow();
     return 0;
 }
