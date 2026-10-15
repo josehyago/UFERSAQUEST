@@ -2,8 +2,10 @@
 
 int main(){
 
-    const int larguraTela = 800;
-    const int alturaTela = 600;
+    
+
+    const int larguraTela = 1800;
+    const int alturaTela = 1000;
 
     InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
     SetTargetFPS(60);
@@ -13,12 +15,22 @@ int main(){
     int faseAtual = 1;
     int **mapa = inicializarMapa("./mapa1.txt", &linhas, &colunas);
 
+    //Texture2D  = LoadTexture("jogador.png");
+    //if (!IsTextureValid(personagem)){
+    //    printf("erroo");
+    //}
+    //Rectangle Recorte = {(personagem.width/7)*2, 0, personagem.height, personagem.width};
+     
+
     // Inicializa a câmera usando o tamanho da janela
     Camera2D camera = criarCamera(larguraTela, alturaTela);
 
     // Inicializar Entidades
     Jogador jogador;
     inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
+    
+    // Carrega a textura do jogador
+    Jogador.textura = LoadTexture("personagem.png");
 
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
@@ -107,6 +119,7 @@ int main(){
                 // Desenha o jogador (Azul)
                 DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
                 
+                
                 // Desenha o inimigo (Vermelho) se estiver vivo
                 if (inimigo.ativo && faseAtual == 1){
                     DrawRectangleV(inimigo.pos, (Vector2){ inimigo.tamanho, inimigo.tamanho }, RED);
@@ -130,6 +143,7 @@ int main(){
             DrawText("GAME OVER!", 300, 250, 40, RED);
             DrawText("Você foi reprovado...", 300, 300, 20, DARKGRAY);
         }
+        //DrawTexturePro(personagem, Recorte, (Rectangle){100, 100, Recorte.width*0.5, Recorte.height*0.5}, (Vector2){0,0}, 0, WHITE);
 
         EndDrawing();
     }

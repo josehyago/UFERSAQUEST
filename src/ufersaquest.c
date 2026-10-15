@@ -351,3 +351,25 @@ void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
 
     DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
 }
+//Função: desenhar o Jogador
+
+void desenharJogador(Jogador jogador, int *contador, int *frame){ {
+    // Se a imagem tem 7 colunas de animação na horizontal:
+    float larguraQuadro = (float)jogador.textura.width / 7.0f;
+    float alturaQuadro = (float)jogador.textura.height;
+
+    // Recorte do primeiro quadro da imagem (índice 0)
+    Rectangle fonte = { 0.0f, 0.0f, larguraQuadro, alturaQuadro };
+
+    // Posição e tamanho real na tela do jogo
+    Rectangle destino = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
+
+    // Origem da rotação (canto superior esquerdo: 0,0)
+    Vector2 origem = { 0.0f, 0.0f };
+
+    DrawTexturePro(jogador.textura, fonte, destino, origem, 0.0f, WHITE);
+    if(*contador >40){
+        fonte.width = (jogador.textura.width / 7.0f)*(*frame);
+        
+    }
+}

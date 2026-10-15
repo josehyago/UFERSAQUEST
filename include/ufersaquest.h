@@ -19,6 +19,7 @@ typedef struct{
     Vector2 pos; // posição (x,y) do jogador na tela 
     float tamanho; // dimensão física do jogador (largura e altura do quadrado de colisão)
     float velocidade; // quantidade de pixels que o jogador se move por frame
+    Texture2D textura; // para o desenho do jogador
 } Jogador;
 
 // Cria as características do inimigo
