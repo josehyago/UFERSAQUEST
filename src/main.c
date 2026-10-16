@@ -37,7 +37,6 @@ int main(){
 
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
-
     /*jogador.textura = LoadTexture("../assets/images/personagem.png");*/
 
     /* // inicializar variáveis de controle do jogador
@@ -193,7 +192,6 @@ int main(){
 
                 // Desenha o jogador com animação
                 desenharJogador(&jogador);
-
                 /*desenharJogador(&jogador, &contadorAnimacao, &frameAnimacao);*/
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
@@ -233,3 +231,4 @@ int main(){
     CloseWindow();
     return 0;
 }
+    
