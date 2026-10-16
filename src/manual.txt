@@ -1,0 +1,21 @@
+==================================================
+              MANUAL DE SOBREVIVENCIA             
+==================================================
+
+1. CONCEITO FIFO (First In, First Out)
+- Conceito: Os primeiros itens a entrarem no estoque/fila sao os primeiros a sairem.
+- Funcionamento: Fila comum (quem chega primeiro eh atendido primeiro).
+- Aplicacoes: Gestao de estoques, produtos pereciveis e Estruturas de Dados (Filas).
+
+2. FUNCAO MALLOC (Memory Allocation)
+- O que faz: Realiza a alocacao dinamica de memoria na regiao Heap.
+- Biblioteca: <stdlib.h>
+- Sintaxe: void* malloc(size_t size); (recebe a quantidade de bytes).
+- Retorno: Ponteiro para o inicio do bloco ou NULL se faltar memoria.
+- Conteudo: A memoria NAO eh limpa e inicia com valores aleatorios ("lixo").
+
+3. CONCEITO DE BYTE
+- Definicao: Unidade basica de medida de armazenamento digital.
+- Composicao: Formado por 8 bits (octeto).
+- Simbolo: Representado pela letra 'B' maiuscula (bit usa 'b' minusculo).
+- Capacidade: Guarda ate 256 combinacoes (ex: 1 caractere ou numero).
