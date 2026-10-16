@@ -159,6 +159,7 @@ int main(){
         ClearBackground(RAYWHITE);
 
         if (estadoAtual == ESTADO_EXPLORACAO){
+    
             BeginMode2D(camera);
 
                 desenharMapa(mapa, linhas, colunas);
