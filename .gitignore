@@ -1,2 +1,22 @@
 # Ignora todos os arquivos executaveis
 *.exe
+*.o
+*.obj
+*.out
+*.app
+*.elf
+
+# Ignora configurações do VS Code
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/c_cpp_properties.json
+
+# Ignora arquivos de sistema do Windows
+desktop.ini
+Desktop.ini
+[Dd]esktop.ini
+
+# Ignora a extensão Code Runner (VS Code)
+tempCodeRunnerFile*
+.code-runner/
