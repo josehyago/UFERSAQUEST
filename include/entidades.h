@@ -22,6 +22,12 @@ typedef struct Jogador{
     float tempoAnimacao;  // Controla a velocidade da animação
     int linhaAnimacao;    // 0 = Frente, 1 = Costas, 2 = Lados
     bool olhandoEsquerda; // Controla o espelhamento horizontal
+    /* Texture2D textura; // para o desenho do jogador
+    float frame; // para animação do jogador
+    int contador; // contador de tempo para animação
+    bool estaAndando; // flag para saber se o jogador está andando ou parado
+    float direcaoOlhar; // direção que o jogador está olhando (1.0f para direita, -1.0f para esquerda)
+    */
 } Jogador;
 
 // Cria as características do inimigo
@@ -40,5 +46,6 @@ void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome);
 void moverJogador(Jogador *j, int **mapa, int linhas, int colunas);
 
 void desenharJogador(Jogador *j);
+/* void desenharJogador(Jogador *jogador, int *contador, int *frame); */
 
 #endif

@@ -38,6 +38,15 @@ int main(){
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
 
+    /*jogador.textura = LoadTexture("../assets/images/personagem.png");*/
+
+    /* // inicializar variáveis de controle do jogador
+    jogador.frame = 0;
+    jogador.contador = 0;
+    jogador.estaAndando = false;
+    jogador.direcaoOlhar = 1.0f;
+    */
+
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
     inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
@@ -84,6 +93,8 @@ int main(){
     qtdItensChao++;
 
     while (!WindowShouldClose()){
+        /*int contadorAnimacao = 0;
+        int frameAnimacao = 0;*/
 
         if (estadoAtual == ESTADO_EXPLORACAO){
             
@@ -182,6 +193,8 @@ int main(){
 
                 // Desenha o jogador com animação
                 desenharJogador(&jogador);
+
+                /*desenharJogador(&jogador, &contadorAnimacao, &frameAnimacao);*/
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
                 if (inimigo.ativo && faseAtual == 1){
