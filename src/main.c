@@ -1,8 +1,6 @@
-#include "ufersaquest.h"
+#include "../include/ufersaquest.h"
 
 int main(){
-
-    
 
     const int larguraTela = 800;
     const int alturaTela = 600;
@@ -32,13 +30,9 @@ int main(){
     inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
     
     // Carrega a textura do jogador
-    jogador.textura = LoadTexture("imagens/personagem.png");
-    // inicializar variáveis de controle do jogador
-    jogador.frame = 0;
-    jogador.contador = 0;
-    jogador.estaAndando = false;
-    jogador.direcaoOlhar = 1.0f;
+    jogador.textura = LoadTexture("../assets/images/personagem.png");
 
+   
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
     inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
@@ -128,7 +122,7 @@ int main(){
 
                 desenharMapa(mapa, linhas, colunas);
                 // Desenha o jogador com animação
-                desenharJogador(jogador, &contadorAnimacao, &frameAnimacao);
+                desenharJogador(&jogador, &contadorAnimacao, &frameAnimacao);
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
                 if (inimigo.ativo && faseAtual == 1){
@@ -164,3 +158,4 @@ int main(){
     CloseWindow();
     return 0;
 }
+    

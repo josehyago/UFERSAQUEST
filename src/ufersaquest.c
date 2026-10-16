@@ -353,10 +353,10 @@ void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
 }
 //Função: desenhar o Jogador
 
-void desenharJogador(Jogador jogador, int *contador, int *frame){ 
+void desenharJogador(Jogador *jogador, int *contador, int *frame){
     //1. Calcula o tamanho exato de 1 quadro (1 das 7 bonequinhas na horizontal)
-    float larguraQuadro = (float)jogador.textura.width / 7.0f;
-    float alturaQuadro = (float)jogador.textura.height;
+    float larguraQuadro = (float)jogador->textura.width / 7.0f;
+    float alturaQuadro = (float)jogador->textura.height;
 
     //2. Incrementa o contador de tempo
     (*contador)++;
@@ -365,6 +365,7 @@ void desenharJogador(Jogador jogador, int *contador, int *frame){
     if (*contador>10){
         *contador=0; // resetar o contador
         (*frame)++; // Avança para a próxima bonequinha
+
         // se passar das poses de caminhada (quadros 2, 3, 4 e 5), volta para a pose 2
         if (*frame>5 || *frame <2) {
             *frame=2;
@@ -372,7 +373,6 @@ void desenharJogador(Jogador jogador, int *contador, int *frame){
     }
 
     //4. Define o retângulo de corte (fonte)
-
     Rectangle fonte ={
         (float)(*frame) * larguraQuadro, // x
         0.0f, //y
@@ -380,11 +380,21 @@ void desenharJogador(Jogador jogador, int *contador, int *frame){
         alturaQuadro
     };
 
+
+    float escala = 8.0f;
+
+    // Calculamos a proporção exata entre a largura e a altura originais
+    float proporcao = larguraQuadro / alturaQuadro;
+    // A altura na tela será baseada no j->tamanho e na escala
+    float alturaFinal = jogador->tamanho * escala;
+    // A largura na tela é ajustada pela proporção para NÃO achatar!
+    float larguraFinal = alturaFinal * proporcao;
+
     //5. Posição e tamanho final onde o personagem vai aparecer no mapa
-    Rectangle destino = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
+    Rectangle destino = { jogador->pos.x, jogador->pos.y, larguraFinal, alturaFinal};
     // Origem da rotação (canto superior esquerdo: 0,0)
     Vector2 origem = { 0.0f, 0.0f };
 
     //6.Desenha na tela o recorte atualizado
-    DrawTexturePro(jogador.textura, fonte, destino, origem, 0.0f, WHITE);
+    DrawTexturePro(jogador->textura, fonte, destino, origem, 0.0f, WHITE);
 }
