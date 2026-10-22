@@ -8,7 +8,8 @@ void inicializarJogador (Jogador *j, Vector2 posInicial){
     j->hp = 100; // vida inicial
     j->score = 0;
     j->pos = posInicial; // define a posição inicial passada como parâmetro
-    j->tamanho = 70.0f; // define a largura e altura
+    j->hitbox = 56.0f;
+    j->tamanho = 80.0f; // define a largura e altura
     j->velocidade= 4.0f; // pixels por frame
     j->qtdItens = 0; // Mochila começa vazia
     j->frameAtual = 0;
@@ -22,7 +23,7 @@ void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
     strcpy (i->nome, nome); // Copia o nome do inimigo passado como parâmetro
     i->hp = 60; // vida do inimigo
     i->pos = posInicial; // posição inicial do inimigo 
-    i->tamanho = 30.0f; // dimensão do inimigo
+    i->tamanho = 60.0f; // dimensão do inimigo
     i->ativo = true; // inicializa vivo
 }
 
@@ -50,7 +51,7 @@ void moverJogador(Jogador *j, int **vetor_mapa, int linhas, int colunas){
     }
 
     // Cria um retângulo de colisão com a nova posição do eixo X
-    Rectangle recX = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    Rectangle recX = obterHitbox(j);
     
     // Se a nova posição colidir com algum obstáculo do mapa, restaura a posição X anterior
     if (checarColisaoComMapa(vetor_mapa, linhas, colunas, recX)) j->pos.x = posXAnterior;
@@ -72,7 +73,7 @@ void moverJogador(Jogador *j, int **vetor_mapa, int linhas, int colunas){
     }
     
     // Cria um retângulo de colisão com a nova posição no eixo Y (já validada no eixo X)
-    Rectangle recY = { j->pos.x, j->pos.y, j->tamanho, j->tamanho };
+    Rectangle recY = obterHitbox(j);
     
     // Se a nova posição colidir com o mapa, restaura a posição Y anterior
     if (checarColisaoComMapa(vetor_mapa, linhas, colunas, recY)) j->pos.y = posYAnterior;
@@ -88,6 +89,16 @@ void moverJogador(Jogador *j, int **vetor_mapa, int linhas, int colunas){
         j->frameAtual = 0; // Retorna ao quadro estático quando parado
         j->tempoAnimacao = 0.0f;
     }
+}
+
+// Retângulo de colisão: menor que o sprite, centralizado e colado nos "pés"
+Rectangle obterHitbox(const Jogador *j){
+    return (Rectangle){
+        j->pos.x + (j->tamanho - j->hitbox) / 2.0f,
+        j->pos.y + (j->tamanho - j->hitbox),
+        j->hitbox,
+        j->hitbox
+    };
 }
 
 // Função para desenhar a caloura cortando a grade 4x3 corretamente.

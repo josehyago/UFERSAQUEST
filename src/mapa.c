@@ -115,51 +115,55 @@ bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle p
 int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador *j, int *faseAtual){
     // Recebe a posição X/Y do jogador e vê em qual bloco da matriz ele está pisando.    
     // Converte a posição X/Y do jogador (em pixels) para a posição na Matriz (linha e coluna).
-    int col = (int)(j->pos.x / MAPA_TILE_SIZE);
-    int lin = (int)(j->pos.y / MAPA_TILE_SIZE);
+    Rectangle h = obterHitbox(j);
+    int col = (int)((h.x + h.width  / 2) / MAPA_TILE_SIZE);
+    int lin = (int)((h.y + h.height / 2) / MAPA_TILE_SIZE);
 
     // Verificação de segurança para não tentar ler fora da matriz
-    if(lin >= 0 && lin < *linhas && col >= 0 && col < *colunas){
-        
-        // Se a matriz nessa posição for igual a 2 (porta):
-        //    - Alterar a variável faseAtual (ex: faseAtual++).
-        //    - Chamar liberarMapa() para apagar o mapa atual da memória.
-        //    - Chamar inicializarMapa() montando o nome do novo arquivo (ex: sprintf(nomeArq, "mapa%d.txt", faseAtual)).
-        //    - Resetar a posição do jogador para o início da nova sala.
+    if (lin < 0 || lin >= *linhas || col < 0 || col >= *colunas) return vetor_mapa;
 
-        // Verifica se o bloco em que ele pisou é uma entrada ou saída (número 2 e 1).
-        int tipoPorta = vetor_mapa[lin][col];
-        if(tipoPorta == 2 || tipoPorta == -1){
-            
-            if(tipoPorta == 2) (*faseAtual)++;
-            if(tipoPorta == -1) (*faseAtual)--;
+    int tipoPorta = vetor_mapa[lin][col];
+    if (tipoPorta != 2 && tipoPorta != -1) return vetor_mapa;
 
-            // Limpa o mapa antigo da memória usando a função que você já criou
-            liberarMapa(vetor_mapa, *linhas);
+    int novaFase = *faseAtual + (tipoPorta == 2 ? 1 : -1);
+    char nomeArq[40];
+    snprintf(nomeArq, sizeof(nomeArq), "./mapa%d.txt", novaFase);
 
-            // Monta o nome do novo arquivo automaticamente (Ex: se faseAtual for 2, vira "mapa2.txt")
-            char NovoMapaTxt[30];
-            sprintf(NovoMapaTxt, "./mapa%d.txt", *faseAtual);
+    int novasLinhas, novasColunas; // temporários: não sobrescrevem os valores do mapa atual se falhar
+    int **novoMapa = inicializarMapa(nomeArq, &novasLinhas, &novasColunas);
 
-            // Carrega o novo mapa. Note que passamos os ponteiros de linhas e colunas, 
-            // então eles já vão ser atualizados lá dentro com o tamanho do novo mapa!
-            int **novoMapa = inicializarMapa(NovoMapaTxt, linhas, colunas);
-
-            // Ajusta a posição do jogador de acordo com a direção da transição
-            if (tipoPorta == 2){
-                // Se avançou de fase (entrada 2), surge no lado esquerdo do novo mapa
-                j->pos.x = 1 * MAPA_TILE_SIZE; 
-                j->pos.y = lin * MAPA_TILE_SIZE; // Mantém a altura (linha) por onde entrou
-            } else if (tipoPorta == -1){
-                // Se recuou de fase (saida -1), surge no lado direito, logo antes da porta
-                j->pos.x = (*colunas - 2) * MAPA_TILE_SIZE; 
-                j->pos.y = lin * MAPA_TILE_SIZE;
-            }
-
-            // Retorna o ponteiro do novo mapa para atualizar na main
-            return novoMapa; 
-        }
+    if (novoMapa == NULL){
+        printf("Mapa %d ainda nao existe. Porta desativada.\n", novaFase);
+        vetor_mapa[lin][col] = 0; // evita tentar recarregar a cada frame
+        return vetor_mapa;
     }
-    // Se ele não pisou na porta, a função só devolve o mapa que já estava usando
-    return vetor_mapa;
+
+    liberarMapa(vetor_mapa, *linhas);
+    *linhas = novasLinhas;
+    *colunas = novasColunas;
+    *faseAtual = novaFase;
+    aplicarPortasAbertas(novoMapa, novasLinhas, novasColunas, novaFase);
+
+    if (lin > novasLinhas - 2) lin = novasLinhas - 2;
+    if (lin < 1) lin = 1;
+
+    j->pos.y = lin * MAPA_TILE_SIZE;
+    j->pos.x = (tipoPorta == 2) ? 1 * MAPA_TILE_SIZE : (novasColunas - 2) * MAPA_TILE_SIZE;
+
+    return novoMapa;
+}
+
+#define MAX_FASES 10
+static bool portaAberta[MAX_FASES + 1] = { false };
+
+void registrarPortaAberta(int fase){
+    if (fase >= 0 && fase <= MAX_FASES) portaAberta[fase] = true;
+}
+
+// Ao recarregar uma fase, troca as portas trancadas (3) por abertas (2) se já foram destrancadas
+static void aplicarPortasAbertas(int **mapa, int linhas, int colunas, int fase){
+    if (fase < 0 || fase > MAX_FASES || !portaAberta[fase]) return;
+    for (int i = 0; i < linhas; i++)
+        for (int j = 0; j < colunas; j++)
+            if (mapa[i][j] == 3) mapa[i][j] = 2;
 }

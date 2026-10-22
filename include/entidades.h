@@ -4,13 +4,15 @@
 
 #include "raylib.h"
 #include "inventario.h"
+#include "tipos.h"
 
 // Cria as características do jogador
-typedef struct Jogador{
+struct Jogador{
     char nome[20];
     int hp; // pontos de vida
     int score; // pontuação atual do jogador
-    Vector2 pos; // posição (x,y) do jogador na tela 
+    Vector2 pos; // posição (x,y) do jogador na tela
+    float hitbox; 
     float tamanho; // dimensão física do jogador (largura e altura do quadrado de colisão)
     float velocidade; // quantidade de pixels que o jogador se move por frame
     Item inventario[10]; // Mochila com 10 espaços máximos.
@@ -28,7 +30,7 @@ typedef struct Jogador{
     bool estaAndando; // flag para saber se o jogador está andando ou parado
     float direcaoOlhar; // direção que o jogador está olhando (1.0f para direita, -1.0f para esquerda)
     */
-} Jogador;
+};
 
 // Cria as características do inimigo
 typedef struct{
@@ -44,6 +46,7 @@ typedef struct{
 void inicializarJogador(Jogador *j, Vector2 posInicial);
 void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome);
 void moverJogador(Jogador *j, int **mapa, int linhas, int colunas);
+Rectangle obterHitbox(const Jogador *j);
 
 void desenharJogador(Jogador *j);
 /* void desenharJogador(Jogador *jogador, int *contador, int *frame); */

@@ -4,8 +4,11 @@
 
 #include "raylib.h"
 #include "mapa.h"
+#include "tipos.h"
 
-typedef struct Jogador Jogador;
+
+#define MAX_ITENS_CHAO 50
+#define TAMANHO_ITEM 50.0f
 
 // Estados possíveis do jogo
 typedef enum { ESTADO_EXPLORACAO, ESTADO_INVENTARIO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
@@ -41,6 +44,7 @@ typedef struct{
 
 // Funções do inventário
 bool adicionarItem(Jogador *j, Item novoItem);
+bool soltarItemNoChao(ItemNoChao *itens, int *qtd, Item item, Vector2 pos, int fase);
 void usarItem(Jogador *j, int posicao, EstadoMenuInventario *menuState);
 void removerItem(Jogador *j, int posicao);
 bool temItem(Jogador *j, TipoItem tipo);

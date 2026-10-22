@@ -21,6 +21,26 @@ bool adicionarItem(Jogador *j, Item novoItem){
     return true;
 }
 
+bool soltarItemNoChao(ItemNoChao *itens, int *qtd, Item item, Vector2 pos, int fase){
+    int slot = -1;
+
+    // procura um slot livre (item já coletado)
+    for (int k = 0; k < *qtd; k++){
+        if (!itens[k].ativo){ slot = k; break; }
+    }
+    // se não achou, usa um novo slot, se ainda houver espaço
+    if (slot == -1){
+        if (*qtd >= MAX_ITENS_CHAO) return false;
+        slot = (*qtd)++;
+    }
+
+    itens[slot].item = item;
+    itens[slot].pos = pos;
+    itens[slot].fase = fase;
+    itens[slot].ativo = true;
+    return true;
+}
+
 // FUNÇÃO: removerItem
 // OBJETIVO: Apagar um item de uma posição específica da mochila e puxar os demais para tapar o buraco.
 // PARÂMETROS: Ponteiro para o Jogador (j) e o índice inteiro da posição.
@@ -92,7 +112,7 @@ void removerItemPorTipo(Jogador *j, TipoItem tipo){
 // OBJETIVO: Processar a ação de apertar ENTER no mapa (pegar itens do chão ou destrancar portas).
 void interagirComAmbiente(Jogador *jogador, ItemNoChao *itensChao, int *qtdItensChao, int faseAtual, int **mapa, int linhas, int colunas){
     // Cria uma caixa de colisão (Rectangle) baseada na posição atual e tamanho do jogador.
-    Rectangle recJogador = { jogador->pos.x, jogador->pos.y, jogador->tamanho, jogador->tamanho };
+    Rectangle recJogador = obterHitbox(jogador);
     
     // Tentar pegar um item do chão
     for (int i = 0; i < *qtdItensChao; i++){
@@ -112,8 +132,8 @@ void interagirComAmbiente(Jogador *jogador, ItemNoChao *itensChao, int *qtdItens
 
     // Tentar Destrancar a porta (Bloco 3 na Matriz).
     // Converte a posição central do jogador em pixels para coordenadas da matriz (linha e coluna).
-    int colCentro = (int)((jogador->pos.x + jogador->tamanho/2) / MAPA_TILE_SIZE);
-    int linCentro = (int)((jogador->pos.y + jogador->tamanho/2) / MAPA_TILE_SIZE);
+    int colCentro = (int)((recJogador.x + recJogador.width  / 2) / MAPA_TILE_SIZE);
+    int linCentro = (int)((recJogador.y + recJogador.height / 2) / MAPA_TILE_SIZE);
     
     // Verifica uma área 3x3 ao redor do jogador para checar se ele está de frente para uma porta trancada.
     for(int i = linCentro - 1; i <= linCentro + 1; i++){
@@ -124,6 +144,7 @@ void interagirComAmbiente(Jogador *jogador, ItemNoChao *itensChao, int *qtdItens
                     // Verifica se o jogador tem a Chave na mochila
                     if(temItem(jogador, ITEM_CHAVE)){ 
                         mapa[i][j] = 2; // Altera o valor da matriz para porta aberta/destrancada
+                        registrarPortaAberta(faseAtual);
                         removerItemPorTipo(jogador, ITEM_CHAVE); // Consome/remove a chave da mochila
                     }
                 }
@@ -141,7 +162,7 @@ void atualizarMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, ItemN
             menu->lendoManual = false;
             menu->examinandoItemGeral = false;
         }
-    } 
+    }
     // Se o submenu de opções (Usar / Examinar / Descartar) estiver aberto:
     else if (menu->menuOpcoesAberto){
         if (IsKeyPressed(KEY_UP)) menu->opcaoSelecionada--;
@@ -166,16 +187,11 @@ void atualizarMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, ItemN
                 menu->menuOpcoesAberto = false;
             } 
             else if (menu->opcaoSelecionada == 2){ // OPÇÃO: DESCARTAR
-                // Cria o item no chão na posição atual do jogador
-                itensChao[*qtdItensChao].item = itemAcao;
-                itensChao[*qtdItensChao].pos = jogador->pos;
-                itensChao[*qtdItensChao].fase = faseAtual;
-                itensChao[*qtdItensChao].ativo = true;
-                (*qtdItensChao)++;
-                
-                removerItem(jogador, menu->itemSelecionado); // Remove da mochila
+                if (soltarItemNoChao(itensChao, qtdItensChao, itemAcao, jogador->pos, faseAtual)){
+                    removerItem(jogador, menu->itemSelecionado);
+                    if (menu->itemSelecionado >= jogador->qtdItens) menu->itemSelecionado--;
+                }
                 menu->menuOpcoesAberto = false;
-                if (menu->itemSelecionado >= jogador->qtdItens) menu->itemSelecionado--;
             }
             if (menu->itemSelecionado < 0) menu->itemSelecionado = 0;
         }

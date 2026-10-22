@@ -11,8 +11,8 @@
 
 int main(){
 
-    const int larguraTela = 800;
-    const int alturaTela = 600;
+    const int larguraTela = 1280;
+    const int alturaTela = 720;
 
     InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
     SetTargetFPS(60);
@@ -74,7 +74,7 @@ int main(){
     }
     
     // Configuração dos itens no chão
-    ItemNoChao itensChao[20];
+    ItemNoChao itensChao[MAX_ITENS_CHAO];
     int qtdItensChao = 0;
 
     // Colocando o Manual no Mapa 1
@@ -92,6 +92,7 @@ int main(){
     qtdItensChao++;
 
     while (!WindowShouldClose()){
+        SetExitKey(KEY_NULL);
         /*int contadorAnimacao = 0;
         int frameAnimacao = 0;*/
 
@@ -112,7 +113,7 @@ int main(){
 
             // Checar se o jogador tocou no inimigo para iniciar a batalha
             if (inimigo.ativo && faseAtual == 1){
-                Rectangle recJogador = { jogador.pos.x, jogador.pos.y, jogador.tamanho, jogador.tamanho };
+                Rectangle recJogador = obterHitbox(&jogador);
                 Rectangle recInimigo = { inimigo.pos.x, inimigo.pos.y, inimigo.tamanho, inimigo.tamanho };
                 
                 if (CheckCollisionRecs(recJogador, recInimigo)){
@@ -134,10 +135,7 @@ int main(){
                     } else if (inimigo.hp <= 0){
                         inimigo.ativo = false;
                         estadoAtual = ESTADO_EXPLORACAO;
-                        itensChao[qtdItensChao].item = (Item){"Chave Dourada", ITEM_CHAVE, 0};
-                        itensChao[qtdItensChao].pos = inimigo.pos; // A chave cai exatamente onde o inimigo estava
-                        itensChao[qtdItensChao].fase = faseAtual;
-                        itensChao[qtdItensChao].ativo = true;
+                        soltarItemNoChao(itensChao, &qtdItensChao, (Item){"Chave Dourada", ITEM_CHAVE, 0}, inimigo.pos, faseAtual);
                         qtdItensChao++;
                     } else if (mudarPergunta){
                         perguntaAtual++;

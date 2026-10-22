@@ -33,6 +33,15 @@ void atualizarCamera(Camera2D *camera, Vector2 playerPos, float playerSize, int 
     if (alvoY < minY) alvoY = minY;
     if (alvoY > maxY) alvoY = maxY;
 
+    float larguraMapa = colunas * MAPA_TILE_SIZE;
+    float alturaMapa  = linhas  * MAPA_TILE_SIZE;
+
+    if (larguraMapa <= larguraTela) alvoX = larguraMapa / 2.0f;
+    else { if (alvoX < minX) alvoX = minX; if (alvoX > maxX) alvoX = maxX; }
+
+    if (alturaMapa <= alturaTela) alvoY = alturaMapa / 2.0f;
+    else { if (alvoY < minY) alvoY = minY; if (alvoY > maxY) alvoY = maxY; }
+
     // Atualiza o alvo final da câmera após as correções.
     camera->target = (Vector2){ alvoX, alvoY };
 }
