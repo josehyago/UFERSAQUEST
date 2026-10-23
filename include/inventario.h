@@ -6,9 +6,9 @@
 #include "mapa.h"
 #include "tipos.h"
 
-
-#define MAX_ITENS_CHAO 50
-#define TAMANHO_ITEM 50.0f
+#define MAX_MOCHILA 10        // quantidade de slots da mochila do jogador
+#define MAX_ITENS_CHAO 50     // quantidade máxima de itens espalhados pelo mapa
+#define TAMANHO_ITEM 50.0f    // lado do quadrado do item no mapa (menor que o tile de 100px)
 
 // Estados possíveis do jogo
 typedef enum { ESTADO_EXPLORACAO, ESTADO_INVENTARIO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
@@ -22,12 +22,13 @@ typedef struct{
     char nome[30]; // Nome do item que vai aparecer na tela (ex: "Coxinha")
     TipoItem tipo; // A categoria dele (baseado no enum acima)
     int poder; // Um valor numérico (Se for cura = quanto de HP recupera)
+    char descricao[120]; // Texto mostrado na opção "Examinar" do menu
 } Item;
 
 // Struct para gerenciar os itens que ficam fisicamente no mapa
 typedef struct{
-    Item item; // Qual é o item real (traz o nome, tipo e poder)
-    Vector2 pos; // Posição X e Y no mapa (usando Vector2 do Raylib)
+    Item item; // Qual é o item real (traz o nome, tipo,poder e descrição)
+    Vector2 pos; // Canto do "tile" do item; o quadrado de TAMANHO_ITEM é centralizado dentro dele
     int fase; // Em qual sala/fase esse item está (para não aparecer em todas)
     bool ativo; // true = está no chão. false = alguém pegou, não deve ser desenhado.
 } ItemNoChao;
@@ -39,17 +40,28 @@ typedef struct{
     int opcaoSelecionada; // Controla a seta dentro da janelinha lateral (0, 1 ou 2)
     bool lendoManual; // true = trava a tela com o texto grande do manual
     bool examinandoItemGeral; // true = trava a tela mostrando a descrição de um item comum
-    char textoManual[2048]; // Um vetor gigante para guardar o texto lido do arquivo .txt
+    char textoManual[2048]; // Guarda o texto lido do arquivo manual.txt
 } EstadoMenuInventario;
 
-// Funções do inventário
+// Criação e aparência dos itens
+Item criarItem(const char *nome, TipoItem tipo, int poder, const char *descricao);
+Rectangle obterRetanguloItem(const ItemNoChao *it);
+Color corDoItem(TipoItem tipo);
+
+// Mochila do jogador
 bool adicionarItem(Jogador *j, Item novoItem);
-bool soltarItemNoChao(ItemNoChao *itens, int *qtd, Item item, Vector2 pos, int fase);
-void usarItem(Jogador *j, int posicao, EstadoMenuInventario *menuState);
 void removerItem(Jogador *j, int posicao);
-bool temItem(Jogador *j, TipoItem tipo);
+void usarItem(Jogador *j, int posicao);
+bool temItem(const Jogador *j, TipoItem tipo);
 void removerItemPorTipo(Jogador *j, TipoItem tipo);
-void interagirComAmbiente(Jogador *jogador, ItemNoChao *itensChao, int *qtdItensChao, int faseAtual, int **mapa, int linhas, int colunas);
+
+// Itens no chão e interação com o ambiente
+bool soltarItemNoChao(ItemNoChao *itens, int *qtd, Item item, Vector2 pos, int fase);
+void interagirComAmbiente(Jogador *jogador, ItemNoChao *itensChao, int qtdItensChao, int faseAtual, int **mapa, int linhas, int colunas);
+void desenharItensNoChao(const ItemNoChao *itens, int qtd, int fase);
+
+// Menu do inventário
+void carregarTextoManual(EstadoMenuInventario *menu, const char *caminho);
 void atualizarMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, ItemNoChao *itensChao, int *qtdItensChao, int faseAtual, EstadoJogo *estadoAtual);
 void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int larguraTela, int alturaTela);
 

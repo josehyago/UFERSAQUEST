@@ -6,16 +6,18 @@
 #include "inventario.h"
 #include "tipos.h"
 
+#define HP_MAXIMO 100 // vida máxima (e inicial) do jogador
+
 // Cria as características do jogador
 struct Jogador{
     char nome[20];
     int hp; // pontos de vida
     int score; // pontuação atual do jogador
-    Vector2 pos; // posição (x,y) do jogador na tela
-    float hitbox; 
-    float tamanho; // dimensão física do jogador (largura e altura do quadrado de colisão)
+    Vector2 pos; // posição (x,y) do canto superior esquerdo do SPRITE
+    float tamanho; // lado do quadrado do sprite desenhado na tela (80px)
+    float hitbox; // lado do quadrado de colisão (56px, menor que o sprite)
     float velocidade; // quantidade de pixels que o jogador se move por frame
-    Item inventario[10]; // Mochila com 10 espaços máximos.
+    Item inventario[MAX_MOCHILA]; // Mochila com MAX_MOCHILA espaços máximos.
     int qtdItens; // Contador essencial para saber quantos espaços estão ocupados.
 
     // Variáveis para a animação da spritesheet
@@ -30,7 +32,6 @@ struct Jogador{
 typedef struct{
     char nome[20];
     int hp;
-    int score;
     Vector2 pos;
     float tamanho;
     bool ativo; // flag booleana: true se o inimigo estiver vivo, false se for derrotado
@@ -41,7 +42,8 @@ void inicializarJogador(Jogador *j, Vector2 posInicial);
 void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome);
 void moverJogador(Jogador *j, int **mapa, int linhas, int colunas);
 Rectangle obterHitbox(const Jogador *j);
-
-void desenharJogador(Jogador *j);
+bool jogadorTocaInimigo(const Jogador *j, const Inimigo *i);
+void desenharJogador(const Jogador *j);
+void desenharInimigo(const Inimigo *i);
 
 #endif

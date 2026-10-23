@@ -4,29 +4,40 @@
 #include "mapa.h"
 #include "entidades.h"
 
-// FUNÇÃO: inicializarMapa 
-// OBJETIVO: Alocar a matriz dinamicamente e preencher a matriz com 0 (chão) e 1 (parede) lendo um arquivo de texto.
-// POR QUE: Facilita a criação de mapas. Você pode desenhar o mapa no Bloco de Notas (usando 0 e 1).
+#define MAX_FASES 10 // quantidade máxima de fases (mapa1.txt ... mapa10.txt)
+
+// Guarda se a porta trancada de cada fase já foi aberta (o índice é o número da fase).
+static bool portaAberta[MAX_FASES + 1] = { false };
+
+// FUNÇÃO: inicializarMapa
+// PARÂMETROS: MapaTxt - caminho do arquivo (ex: "./mapa1.txt"); linhas e colunas - ponteiros que recebem o tamanho lido do arquivo (parâmetros de saída).
+// POR QUE: facilita criar mapas. Dá para desenhar a fase no Bloco de Notas usando os números do enum TipoTile.
+// PARA QUE SERVE: aloca a matriz dinamicamente (malloc) e a preenche com o conteúdo do arquivo. RETORNA a matriz pronta, ou NULL se algo falhar (arquivo ausente, formato inválido ou falta de memória), sem deixar memória vazando.
+// COMPLEXIDADE: O(n2), pois lê cada célula uma vez.
 int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas){
-    // Abre o arquivo MapaTxt em modo leitura ("r").
+    // Abre o arquivo em modo leitura ("r"). Se não abrir, avisa no console e devolve NULL.
     FILE *file_mapa = fopen(MapaTxt, "r");
-    // Se for NULL, imprime um erro no console e retorna NULL.
     if (file_mapa == NULL){
-        perror("Erro ao ler o arquivo do mapa");
+        perror("Erro ao abrir o arquivo do mapa");
         return NULL;
     }
-    // Lê a primeira linha usando fscanf(file_mapa, "%d %d", linhas, colunas) para descobrir o tamanho.
+
+    // A primeira linha do arquivo traz o tamanho: "linhas colunas".
     if (fscanf(file_mapa, "%d %d", linhas, colunas) != 2 || *linhas <= 0 || *colunas <= 0){
         printf("Cabecalho invalido em %s\n", MapaTxt);
         fclose(file_mapa);
         return NULL;
     }
-    // Usar malloc() para criar um vetor de ponteiros (linhas) e, dentro de um laço 'for', dar malloc() para cada coluna.
+
+    // Aloca o vetor de ponteiros (uma posição para cada linha da matriz).
     int **vetor_mapa = (int **) malloc(*linhas * sizeof(int *));
     if (vetor_mapa == NULL){
+        printf("Erro ao alocar memoria.\n");
         fclose(file_mapa);
         return NULL;
     }
+
+    // Aloca cada linha com o número de colunas. Se alguma falhar, libera as anteriores e desiste.
     for (int i = 0; i < *linhas; i++){
         vetor_mapa[i] = (int *) malloc(*colunas * sizeof(int));
         if (vetor_mapa[i] == NULL){
@@ -37,7 +48,8 @@ int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas){
             return NULL;
         }
     }
-    // Usar dois laços 'for' (i e j) e usar fscanf(file_mapa, "%d", &vetor_mapa[i][j]) para ler o resto dos números e preencher a matriz.
+
+    // Lê os números restantes do arquivo e preenche a matriz célula por célula.
     for (int i = 0; i < *linhas; i++){
         for (int j = 0; j < *colunas; j++){
             if (fscanf(file_mapa, "%d", &vetor_mapa[i][j]) != 1){
@@ -48,136 +60,159 @@ int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas){
             }
         }
     }
-    // Fecha o arquivo (fclose) e retorna o ponteiro da matriz alocada.
+
     fclose(file_mapa);
     return vetor_mapa;
 }
 
-// FUNÇÃO: liberarMapa 
-// OBJETIVO: Limpar a memória do mapa antigo antes de carregar o próximo.
+// FUNÇÃO: liberarMapa
+// PARÂMETROS: vetor_mapa - a matriz a ser apagada; linhas - quantas linhas ela tem.
+// POR QUE: toda memória pedida com malloc precisa ser devolvida com free, senão há vazamento.
+// PARA QUE SERVE: limpa da memória o mapa antigo antes de carregar o próximo (ou ao fechar o jogo).
+// COMPLEXIDADE: O(n).
 void liberarMapa(int **vetor_mapa, int linhas){
-    // Laço 'for' para dar free() em cada linha (mapa[i]).
+    // Libera cada linha (vetor_mapa[i]) primeiro
     for (int i = 0; i < linhas; i++) free(vetor_mapa[i]);
-    // Free() no ponteiro principal (mapa).
+    // e só depois o vetor de ponteiros principal.
     free(vetor_mapa);
 }
 
 // FUNÇÃO: desenharMapa
-// OBJETIVO: Ler a matriz e desenhar os quadrados coloridos na tela.
+// PARÂMETROS: vetor_mapa - a matriz do mapa; linhas e colunas - o tamanho dela.
+// POR QUE: o mapa é só números; alguém precisa transformá-los em quadrados coloridos na tela.
+// PARA QUE SERVE: percorre a matriz e desenha um quadrado de MAPA_TILE_SIZE para cada célula.
+// COMPLEXIDADE: O(n2).
 void desenharMapa(int **vetor_mapa, int linhas, int colunas){
     for (int i = 0; i < linhas; i++){
-        for(int j = 0; j < colunas; j++){
+        for (int j = 0; j < colunas; j++){
 
-            // Converte a posição da matriz (índices 0, 1, 2...) para pixels na tela.
-            // Ex: coluna 2 * 40px = posição 80px no eixo X.
+            // Converte a posição da matriz (índices) para pixels.
+            // Ex: coluna 2 * 100px = posição 200px no eixo X.
             int posX = j * MAPA_TILE_SIZE;
             int posY = i * MAPA_TILE_SIZE;
-            
-            // Desenha o bloco dependendo do número salvo na matriz
-            if(vetor_mapa[i][j] == 1)
-                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, DARKGRAY); // Parede escura 
-            if(vetor_mapa[i][j] == 0)
-                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, LIGHTGRAY); // Chão claro
-            if(vetor_mapa[i][j] == -1 || vetor_mapa[i][j] == 2)
-                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, GREEN); // Porta ou Saída (Verde)
-            if(vetor_mapa[i][j] == 3)
-                DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, MAROON); // Porta Trancada (Vermelha)
-            /* // Desenha as linhas de grade para facilitar a visualização
-            DrawRectangleLines(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, GRAY); */
-        } 
+
+            // Escolhe a cor de acordo com o tipo do bloco.
+            Color cor;
+            switch (vetor_mapa[i][j]){
+                case TILE_PAREDE:          cor = DARKGRAY;  break; // Parede escura
+                case TILE_CHAO:            cor = LIGHTGRAY; break; // Chão claro
+                case TILE_PORTA:
+                case TILE_VOLTA:           cor = GREEN;     break; // Porta ou saída (verde)
+                case TILE_PORTA_TRANCADA:  cor = MAROON;    break; // Porta trancada (vermelha)
+                default:                   cor = MAGENTA;   break; // Valor desconhecido: denuncia erro no .txt
+            }
+
+            DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, cor);
+        }
     }
 }
 
 // FUNÇÃO: checarColisaoComMapa
-// OBJETIVO: Impedir que o jogador atravesse os blocos de valor "1".
-// RETORNA: 'true' se bateu em uma parede, 'false' se o caminho estiver livre.
+// PARÂMETROS: vetor_mapa, linhas, colunas - o mapa; playerRec - retângulo de colisão (hitbox) a testar.
+// POR QUE: impede o jogador de atravessar paredes e portas trancadas.
+// PARA QUE SERVE: RETORNA true se o retângulo bate em parede/porta trancada, false se o caminho está livre.
+// COMPLEXIDADE: O(1). Só olha os poucos blocos sob o retângulo, nunca o mapa inteiro.
 bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle playerRec){
-    
-    // Em vez de checar todos os blocos do mapa, checamos apenas os blocos que estão imediatamente ao redor e debaixo do jogador.
-    // Convertendo a posição em pixels do jogador de volta para índices da matriz:
+
+    // Converte os cantos do retângulo (pixels) em índices da matriz: só esses blocos precisam ser testados.
     int minX = (int)(playerRec.x / MAPA_TILE_SIZE);
     int minY = (int)(playerRec.y / MAPA_TILE_SIZE);
     int maxX = (int)((playerRec.x + playerRec.width)  / MAPA_TILE_SIZE);
     int maxY = (int)((playerRec.y + playerRec.height) / MAPA_TILE_SIZE);
 
+    // Trava os índices dentro da matriz para nunca ler fora dela.
     if (minX < 0) minX = 0;
     if (minY < 0) minY = 0;
     if (maxX >= colunas) maxX = colunas - 1;
     if (maxY >= linhas)  maxY = linhas - 1;
-    
+
     // Vasculha apenas a área próxima ao jogador.
     for (int i = minY; i <= maxY; i++){
         for (int j = minX; j <= maxX; j++){
-            if (vetor_mapa[i][j] == 1 || vetor_mapa[i][j] == 3){ // Se o bloco verificado for uma parede.
-                
-                // Cria um Rectangle para esse bloco de parede.
+            // Só parede e porta trancada bloqueiam a passagem.
+            if (vetor_mapa[i][j] == TILE_PAREDE || vetor_mapa[i][j] == TILE_PORTA_TRANCADA){
+
+                // Cria um Rectangle para esse bloco.
                 Rectangle bloco = { j * MAPA_TILE_SIZE, i * MAPA_TILE_SIZE, MAPA_TILE_SIZE, MAPA_TILE_SIZE };
-                
-                // A função CheckCollisionRecs da Raylib cruza as duas caixas (jogador e bloco).
-                // Se elas se sobrepuserem, houve colisão.
-                if (CheckCollisionRecs(playerRec, bloco)){
-                    return true; // Colisão confirmada. Interrompe a função.
-                }
+
+                // CheckCollisionRecs (Raylib) retorna true se os dois retângulos se sobrepõem.
+                if (CheckCollisionRecs(playerRec, bloco)) return true;
             }
         }
     }
-    return false; // Se o loop terminar sem achar parede, o caminho está livre.
+    return false; // Nenhum bloco sólido encontrado: caminho livre.
+}
+
+// FUNÇÃO: registrarPortaAberta
+// PARÂMETROS: fase - número da fase cuja porta foi destrancada.
+// POR QUE: o mapa é recarregado do arquivo ao trocar de sala, e o arquivo sempre tem a porta trancada (3).
+// PARA QUE SERVE: lembra que a porta dessa fase já foi aberta, para ela não "trancar de novo" ao voltar.
+void registrarPortaAberta(int fase){
+    if (fase >= 0 && fase <= MAX_FASES) portaAberta[fase] = true;
+}
+
+// FUNÇÃO: aplicarPortasAbertas (uso interno deste arquivo)
+// PARÂMETROS: mapa, linhas, colunas - o mapa recém-carregado; fase - número dessa fase.
+// POR QUE: complementa registrarPortaAberta, restaurando o que o jogador já destrancou.
+// PARA QUE SERVE: se a porta dessa fase já foi aberta, troca todas as portas trancadas por portas abertas.
+// COMPLEXIDADE: O(n2).
+static void aplicarPortasAbertas(int **mapa, int linhas, int colunas, int fase){
+    if (fase < 0 || fase > MAX_FASES || !portaAberta[fase]) return;
+
+    for (int i = 0; i < linhas; i++){
+        for (int j = 0; j < colunas; j++){
+            if (mapa[i][j] == TILE_PORTA_TRANCADA) mapa[i][j] = TILE_PORTA;
+        }
+    }
 }
 
 // FUNÇÃO: checarTransicaoDeFase
-// OBJETIVO: Mudar de sala se o jogador pisar em um bloco de "Porta" (número 2 na matriz).
+// PARÂMETROS: vetor_mapa - mapa atual; linhas, colunas - ponteiros com o tamanho do mapa atual (são atualizados se a fase mudar); j - jogador (sua posição é ajustada); faseAtual - ponteiro para o número da fase (é atualizado se a fase mudar).
+// POR QUE: o jogo tem várias salas; pisar numa porta precisa levar o jogador para outra.
+// PARA QUE SERVE: se o centro da hitbox do jogador está sobre uma porta (2 = avançar, -1 = voltar), carrega o mapa da outra fase e reposiciona o jogador. RETORNA o ponteiro do mapa que deve ser usado daqui para frente (o novo, ou o mesmo se nada mudou).
+// COMPLEXIDADE: O(1) quando não há porta; O(linhas x colunas) no quadro em que a fase é carregada.
 int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador *j, int *faseAtual){
-    // Recebe a posição X/Y do jogador e vê em qual bloco da matriz ele está pisando.    
-    // Converte a posição X/Y do jogador (em pixels) para a posição na Matriz (linha e coluna).
+    // Descobre em qual bloco da matriz está o CENTRO da hitbox do jogador.
     Rectangle h = obterHitbox(j);
     int col = (int)((h.x + h.width  / 2) / MAPA_TILE_SIZE);
     int lin = (int)((h.y + h.height / 2) / MAPA_TILE_SIZE);
 
-    // Verificação de segurança para não tentar ler fora da matriz
+    // Segurança: não ler fora da matriz.
     if (lin < 0 || lin >= *linhas || col < 0 || col >= *colunas) return vetor_mapa;
 
+    // Se o bloco não for porta, não há o que fazer.
     int tipoPorta = vetor_mapa[lin][col];
-    if (tipoPorta != 2 && tipoPorta != -1) return vetor_mapa;
+    if (tipoPorta != TILE_PORTA && tipoPorta != TILE_VOLTA) return vetor_mapa;
 
-    int novaFase = *faseAtual + (tipoPorta == 2 ? 1 : -1);
+    // Monta o nome do arquivo da fase de destino (ex: faseAtual 1 + porta 2 -> "./mapa2.txt").
+    int novaFase = *faseAtual + (tipoPorta == TILE_PORTA ? 1 : -1);
     char nomeArq[40];
     snprintf(nomeArq, sizeof(nomeArq), "./mapa%d.txt", novaFase);
 
-    int novasLinhas, novasColunas; // temporários: não sobrescrevem os valores do mapa atual se falhar
+    // Carrega o novo mapa ANTES de apagar o antigo. Os tamanhos vão para variáveis temporárias, assim, se o carregamento falhar, os valores do mapa atual continuam intactos.
+    int novasLinhas, novasColunas;
     int **novoMapa = inicializarMapa(nomeArq, &novasLinhas, &novasColunas);
 
     if (novoMapa == NULL){
         printf("Mapa %d ainda nao existe. Porta desativada.\n", novaFase);
-        vetor_mapa[lin][col] = 0; // evita tentar recarregar a cada frame
+        vetor_mapa[lin][col] = TILE_CHAO; // transforma em chão para não tentar recarregar a cada quadro
         return vetor_mapa;
     }
 
+    // Deu certo: troca o mapa antigo pelo novo e atualiza os valores do chamador.
     liberarMapa(vetor_mapa, *linhas);
     *linhas = novasLinhas;
     *colunas = novasColunas;
     *faseAtual = novaFase;
     aplicarPortasAbertas(novoMapa, novasLinhas, novasColunas, novaFase);
 
+    // Mantém a linha de entrada dentro do novo mapa (entre a 1ª e a penúltima linha).
     if (lin > novasLinhas - 2) lin = novasLinhas - 2;
     if (lin < 1) lin = 1;
 
+    // Reposiciona o jogador: avançou -> lado esquerdo do novo mapa; voltou -> lado direito.
     j->pos.y = lin * MAPA_TILE_SIZE;
-    j->pos.x = (tipoPorta == 2) ? 1 * MAPA_TILE_SIZE : (novasColunas - 2) * MAPA_TILE_SIZE;
+    j->pos.x = (tipoPorta == TILE_PORTA) ? 1 * MAPA_TILE_SIZE : (novasColunas - 2) * MAPA_TILE_SIZE;
 
     return novoMapa;
-}
-
-#define MAX_FASES 10
-static bool portaAberta[MAX_FASES + 1] = { false };
-
-void registrarPortaAberta(int fase){
-    if (fase >= 0 && fase <= MAX_FASES) portaAberta[fase] = true;
-}
-
-// Ao recarregar uma fase, troca as portas trancadas (3) por abertas (2) se já foram destrancadas
-static void aplicarPortasAbertas(int **mapa, int linhas, int colunas, int fase){
-    if (fase < 0 || fase > MAX_FASES || !portaAberta[fase]) return;
-    for (int i = 0; i < linhas; i++)
-        for (int j = 0; j < colunas; j++)
-            if (mapa[i][j] == 3) mapa[i][j] = 2;
 }

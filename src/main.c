@@ -1,14 +1,11 @@
+// main.c
+#include <stdio.h>
 #include "mapa.h"
 #include "camera.h"
 #include "entidades.h"
 #include "inventario.h"
 #include "combate.h"
 #include "ui.h"
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
 
 int main(){
 
@@ -17,6 +14,7 @@ int main(){
 
     InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
     SetTargetFPS(60);
+    SetExitKey(KEY_NULL);
 
     // Cria a matriz e chama a função para preencher ela com paredes e chão
     int linhas = 0, colunas = 0;
@@ -29,6 +27,7 @@ int main(){
         return 1;
     }
 
+    // Carrega a fonte com acentos (precisa vir depois do InitWindow).
     carregarFonteUI("../assets/fonts/open-sans.bold.ttf");
 
     // Inicializa a câmera usando o tamanho da janela
@@ -45,175 +44,122 @@ int main(){
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
     inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
 
-    // Inicializar Combate
-    int qtdPerguntas;
-    Pergunta *bancoPerguntas = criarBancoPerguntas(&qtdPerguntas);
-    int perguntaAtual = 0;
+    // Prepara o combate (banco de perguntas, temporizador, mensagem). Falhar aqui encerra o jogo.
+    EstadoCombate combate;
+    if (!inicializarCombate(&combate)){
+        liberarMapa(mapa, linhas);
+        UnloadTexture(jogador.textura);
+        descarregarFonteUI();
+        CloseWindow();
+        return 1;
+    }
 
-    // Variáveis de Controle do Combate e Tempo
-    float tempoMensagem = 0.0f;
-    char mensagemCombate[100] = "";
-    Color corMensagem = BLANK;
-    bool mudarPergunta = false;
-
+    // O jogo começa explorando o mapa.
     EstadoJogo estadoAtual = ESTADO_EXPLORACAO;
 
-    // Inicializa o controle do menu
-    EstadoMenuInventario menuInventario = {0}; 
-    strcpy(menuInventario.textoManual, "Erro: manual.txt nao encontrado!");
-    
-    FILE *arqManual = fopen("manual.txt", "r");
-    if(arqManual){
-        size_t lidos = fread(menuInventario.textoManual, 1, sizeof(menuInventario.textoManual) - 1, arqManual);
-        menuInventario.textoManual[lidos] = '\0'; // termina a string
-        fclose(arqManual);
-    }
-    
-    // Configuração dos itens no chão
-    ItemNoChao itensChao[MAX_ITENS_CHAO];
+    // Prepara o menu do inventário e carrega o texto do manual a partir do arquivo.
+    EstadoMenuInventario menuInventario = {0};
+    carregarTextoManual(&menuInventario, "manual.txt");
+
+    // Vetor com os itens que estão no chão (começa zerado, sem lixo de memória).
+    ItemNoChao itensChao[MAX_ITENS_CHAO] = {0};
     int qtdItensChao = 0;
 
-    // Colocando o Manual no Mapa 1
-    itensChao[qtdItensChao].item = (Item){"Manual de C", ITEM_MANUAL, 0};
-    itensChao[qtdItensChao].pos = (Vector2){ 15 * MAPA_TILE_SIZE, 15 * MAPA_TILE_SIZE };
-    itensChao[qtdItensChao].fase = 1;
-    itensChao[qtdItensChao].ativo = true;
-    qtdItensChao++;
-
-    // Colocando a Coxinha no Mapa 2
-    itensChao[qtdItensChao].item = (Item){"Coxinha", ITEM_CURA, 40};
-    itensChao[qtdItensChao].pos = (Vector2){ 15 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE };
-    itensChao[qtdItensChao].fase = 2;
-    itensChao[qtdItensChao].ativo = true;
-    qtdItensChao++;
+    // Coloca o Manual no mapa 1 e a Coxinha no mapa 2.
+    soltarItemNoChao(itensChao, &qtdItensChao, criarItem("Manual de C", ITEM_MANUAL, 0, "Um manual com as respostas das provas."), (Vector2){ 15 * MAPA_TILE_SIZE, 15 * MAPA_TILE_SIZE }, 1);
+    soltarItemNoChao(itensChao, &qtdItensChao, criarItem("Coxinha", ITEM_CURA, 40, "Uma coxinha do RU fresquinha.\nRecupera parte da vida perdida."), (Vector2){ 15 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, 2);
 
     while (!WindowShouldClose()){
-        SetExitKey(KEY_NULL);
 
-        if (estadoAtual == ESTADO_EXPLORACAO){
-            
-            moverJogador(&jogador, mapa, linhas, colunas);
+        switch (estadoAtual){
 
-            if (IsKeyPressed(KEY_TAB)) estadoAtual = ESTADO_INVENTARIO;
+            case ESTADO_EXPLORACAO:
+                // Anda pelo mapa (teclado + colisão + animação).
+                moverJogador(&jogador, mapa, linhas, colunas);
 
-            if (IsKeyPressed(KEY_ENTER)){
-                interagirComAmbiente(&jogador, itensChao, &qtdItensChao, faseAtual, mapa, linhas, colunas);
+                // TAB abre o inventário.
+                if (IsKeyPressed(KEY_TAB)) estadoAtual = ESTADO_INVENTARIO;
+
+                // ENTER pega o item do chão e/ou destrava a porta, se o jogador tiver a chave.
+                if (IsKeyPressed(KEY_ENTER)){
+                    interagirComAmbiente(&jogador, itensChao, qtdItensChao, faseAtual, mapa, linhas, colunas);
+                }
+
+                // Se o jogador pisou numa porta, troca de fase e recebe o novo mapa.
+                mapa = checarTransicaoDeFase(mapa, &linhas, &colunas, &jogador, &faseAtual);
+
+                // A câmera segue o jogador, sem sair das bordas do mapa.
+                atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela, linhas, colunas);
+
+                // Se o jogador tocou no inimigo (vivo, na fase 1), começa o combate.
+                if (inimigo.ativo && faseAtual == 1 && jogadorTocaInimigo(&jogador, &inimigo)){
+                    estadoAtual = ESTADO_COMBATE;
+                }
+                break;
+
+            case ESTADO_INVENTARIO:
+                // Navegação do menu (setas, ENTER, ESC, TAB).
+                atualizarMenuInventario(&jogador, &menuInventario, itensChao, &qtdItensChao, faseAtual, &estadoAtual);
+                break;
+
+            case ESTADO_COMBATE: {
+                // Roda um quadro do combate e reage ao resultado.
+                ResultadoCombate resultado = atualizarCombate(&combate, &jogador, &inimigo);
+
+                if (resultado == COMBATE_DERROTA){
+                    estadoAtual = ESTADO_GAMEOVER;
+                } else if (resultado == COMBATE_VITORIA){
+                    // Inimigo derrotado: some do mapa, o jogo volta a explorar e a chave cai onde ele estava.
+                    inimigo.ativo = false;
+                    estadoAtual = ESTADO_EXPLORACAO;
+                    soltarItemNoChao(itensChao, &qtdItensChao,
+                                     criarItem("Chave Dourada", ITEM_CHAVE, 0, "Uma chave dourada.\nParece se encaixar na porta final."),
+                                     inimigo.pos, faseAtual);
+                }
+                break;
             }
 
-            // Checar a troca de fase (Atualiza o ponteiro do mapa se ele pisar na porta)
-            mapa = checarTransicaoDeFase(mapa, &linhas, &colunas, &jogador, &faseAtual);
-
-            atualizarCamera(&camera, jogador.pos, jogador.tamanho, larguraTela, alturaTela, linhas, colunas);
-
-            // Checar se o jogador tocou no inimigo para iniciar a batalha
-            if (inimigo.ativo && faseAtual == 1){
-                Rectangle recJogador = obterHitbox(&jogador);
-                Rectangle recInimigo = { inimigo.pos.x, inimigo.pos.y, inimigo.tamanho, inimigo.tamanho };
-                
-                if (CheckCollisionRecs(recJogador, recInimigo)){
-                    estadoAtual = ESTADO_COMBATE; // Muda a tela
-                }
-            }
-            
-        }else if (estadoAtual == ESTADO_INVENTARIO){
-            atualizarMenuInventario(&jogador, &menuInventario, itensChao, &qtdItensChao, faseAtual, &estadoAtual);
-        } else if (estadoAtual == ESTADO_COMBATE){
-            
-            // Se o temporizador está ativo, aguarda 2 segundos exibindo a mensagem
-            if (tempoMensagem > 0){
-                tempoMensagem -= GetFrameTime();
-
-                if (tempoMensagem <= 0){
-                    if (jogador.hp <= 0){
-                        estadoAtual = ESTADO_GAMEOVER;
-                    } else if (inimigo.hp <= 0){
-                        inimigo.ativo = false;
-                        estadoAtual = ESTADO_EXPLORACAO;
-                        soltarItemNoChao(itensChao, &qtdItensChao, (Item){"Chave Dourada", ITEM_CHAVE, 0}, inimigo.pos, faseAtual);
-                        qtdItensChao++;
-                    } else if (mudarPergunta){
-                        perguntaAtual++;
-                        if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0;
-                        for (int k = 0; k < 4; k++) bancoPerguntas[perguntaAtual].opcaoOculta[k] = false;
-                        mudarPergunta = false;
-                    }
-                }
-            } else {
-                // Leitura dos botões de resposta
-                int escolha = -1;
-                if (IsKeyPressed(KEY_ONE)) escolha = 0;
-                if (IsKeyPressed(KEY_TWO)) escolha = 1;
-                if (IsKeyPressed(KEY_THREE)) escolha = 2;
-                if (IsKeyPressed(KEY_FOUR)) escolha = 3;
-
-                // Processa apenas escolhas válidas e não ocultas
-                if (escolha != -1 && !bancoPerguntas[perguntaAtual].opcaoOculta[escolha]){
-                    
-                    // Executa a lógica de rodada via função
-                    resolverTurno(&jogador, &inimigo, &bancoPerguntas[perguntaAtual], escolha, mensagemCombate, &corMensagem, &mudarPergunta);
-
-                    // Ativa a pausa de 2 segundos para o jogador ler o resultado
-                    tempoMensagem = 2.0f;
-                }
-            }
+            case ESTADO_GAMEOVER:
+                // Por enquanto não há nada a atualizar (ainda não existe opção de reiniciar).
+                break;
         }
 
         BeginDrawing();
         ClearBackground(RAYWHITE);
 
-        if (estadoAtual == ESTADO_EXPLORACAO){
-    
-            BeginMode2D(camera);
+        switch (estadoAtual){
 
-                desenharMapa(mapa, linhas, colunas);
+            case ESTADO_EXPLORACAO:
+                // Tudo entre BeginMode2D e EndMode2D usa coordenadas do mapa e é movido pela câmera.
+                BeginMode2D(camera);
+                    desenharMapa(mapa, linhas, colunas);
+                    desenharItensNoChao(itensChao, qtdItensChao, faseAtual);
+                    desenharJogador(&jogador);
+                    if (inimigo.ativo && faseAtual == 1) desenharInimigo(&inimigo);
+                EndMode2D();
+                break;
 
-                for (int i = 0; i < qtdItensChao; i++){
-                    if (itensChao[i].ativo && itensChao[i].fase == faseAtual){
-                        Color corItem = WHITE;
-                        if (itensChao[i].item.tipo == ITEM_CHAVE) corItem = GOLD; // Chave dourada
-                        if (itensChao[i].item.tipo == ITEM_MANUAL) corItem = DARKBLUE; // Manual azul
-                        if (itensChao[i].item.tipo == ITEM_CURA) corItem = GREEN; // Cura verde
+            case ESTADO_COMBATE:
+                desenharCombate(&combate, &jogador, &inimigo);
+                break;
 
-                        DrawRectangleV(itensChao[i].pos, (Vector2){ MAPA_TILE_SIZE, MAPA_TILE_SIZE }, corItem);
-                    }
-                }
+            case ESTADO_GAMEOVER:
+                desenharTextoCentralizado("GAME OVER!", 250, 40, RED);
+                desenharTextoCentralizado("Você foi reprovado...", 300, 20, DARKGRAY);
+                break;
 
-                // Desenha o jogador com animação
-                desenharJogador(&jogador);
-                
-                // Desenha o inimigo (Vermelho) se estiver vivo
-                if (inimigo.ativo && faseAtual == 1){
-                    DrawRectangleV(inimigo.pos, (Vector2){ inimigo.tamanho, inimigo.tamanho }, RED);
-                }
-
-            EndMode2D();
-
-        } else if (estadoAtual == ESTADO_COMBATE){
-            
-            desenharInterfaceCombate(&bancoPerguntas[perguntaAtual], &jogador, &inimigo);
-
-            if (tempoMensagem > 0){
-                DrawRectangle(0, 200, larguraTela, 80, Fade(BLACK, 0.7f));
-                int tamanhoTexto = medirTexto(mensagemCombate, 30);
-                desenharTexto(mensagemCombate, (larguraTela - tamanhoTexto) / 2, 225, 30, corMensagem);
-            }
-            
-        } else if (estadoAtual == ESTADO_GAMEOVER){
-            desenharTexto("GAME OVER!", (larguraTela - medirTexto("GAME OVER!", 40)) / 2, 250, 40, RED);
-            desenharTexto("Você foi reprovado...", (larguraTela - medirTexto("Você foi reprovado...", 20)) / 2, 300, 20, DARKGRAY);
-        
-        } else if (estadoAtual == ESTADO_INVENTARIO){
-            desenharMenuInventario(&jogador, &menuInventario, larguraTela, alturaTela);
+            case ESTADO_INVENTARIO:
+                desenharMenuInventario(&jogador, &menuInventario, larguraTela, alturaTela);
+                break;
         }
 
         EndDrawing();
     }
 
     liberarMapa(mapa, linhas);
-    liberarBancoPerguntas(bancoPerguntas);
-    UnloadTexture(jogador.textura); // descarregar jogador
+    liberarCombate(&combate);
+    UnloadTexture(jogador.textura);
     descarregarFonteUI();
     CloseWindow();
     return 0;
 }
-    
