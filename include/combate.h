@@ -17,6 +17,6 @@ typedef struct{
 Pergunta* criarBancoPerguntas(int *qtdPerguntas);
 void liberarBancoPerguntas(Pergunta *banco);
 bool resolverTurno(Jogador *j, Inimigo *i, Pergunta *p, int escolha, char *mensagem, Color *corMensagem, bool *mudarPergunta);
-void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i);
+void desenharInterfaceCombate(const Pergunta *p, const Jogador *j, const Inimigo *i);
 
 #endif

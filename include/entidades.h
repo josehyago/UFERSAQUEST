@@ -23,13 +23,7 @@ struct Jogador{
     int frameAtual;       // Quadro atual (0 a 3)
     float tempoAnimacao;  // Controla a velocidade da animação
     int linhaAnimacao;    // 0 = Frente, 1 = Costas, 2 = Lados
-    bool olhandoEsquerda; // Controla o espelhamento horizontal
-    /* Texture2D textura; // para o desenho do jogador
-    float frame; // para animação do jogador
-    int contador; // contador de tempo para animação
-    bool estaAndando; // flag para saber se o jogador está andando ou parado
-    float direcaoOlhar; // direção que o jogador está olhando (1.0f para direita, -1.0f para esquerda)
-    */
+    bool espelharSprite; // Controla o espelhamento horizontal
 };
 
 // Cria as características do inimigo
@@ -49,6 +43,5 @@ void moverJogador(Jogador *j, int **mapa, int linhas, int colunas);
 Rectangle obterHitbox(const Jogador *j);
 
 void desenharJogador(Jogador *j);
-/* void desenharJogador(Jogador *jogador, int *contador, int *frame); */
 
 #endif

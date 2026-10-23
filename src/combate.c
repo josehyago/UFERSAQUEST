@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "combate.h"
+#include "ui.h"
 
 // Função que usa alocação dinâmica (malloc) para criar o banco de perguntas
 Pergunta* criarBancoPerguntas(int *qtdPerguntas){
@@ -84,25 +85,25 @@ bool resolverTurno(Jogador *j, Inimigo *i, Pergunta *p, int escolha,  char *mens
     return (j->hp == 0 || i->hp == 0);
 }
 
-// Interface de combate usando Raylib (DrawText para mostrar pergunta e opções)
-void desenharInterfaceCombate(Pergunta p, Jogador j, Inimigo i){
-    // Exibindo HP dos personagens
-    DrawText(TextFormat("Jogador: %s | HP: %d | Score: %d", j.nome, j.hp, j.score), 50, 40, 20, GREEN);
-    DrawText(TextFormat("Chefe: %s | HP: %d", i.nome, i.hp), 500, 40, 20, RED);
+void desenharInterfaceCombate(const Pergunta *p, const Jogador *j, const Inimigo *i){
+    int L = GetScreenWidth(), A = GetScreenHeight();
+    int margem = L / 16;
 
-    // Caixa de fundo para o Quiz
-    DrawRectangle(40, 300, 720, 250, LIGHTGRAY);
-    DrawRectangleLines(40, 300, 720, 250, DARKGRAY);
+    desenharTexto(TextFormat("Jogador: %s | HP: %d | Score: %d", j->nome, j->hp, j->score), margem, 40, 20, GREEN);
+    const char *txtInimigo = TextFormat("Chefe: %s | HP: %d", i->nome, i->hp);
+    desenharTexto(txtInimigo, L - margem - medirTexto(txtInimigo, 20), 40, 20, RED);
 
-    // Mostra o enunciado da Pergunta
-    DrawText(p.texto, 60, 320, 20, BLACK);
+    int cx = margem, cw = L - 2 * margem, ch = 250, cy = A - ch - margem / 2;
+    DrawRectangle(cx, cy, cw, ch, LIGHTGRAY);
+    DrawRectangleLines(cx, cy, cw, ch, DARKGRAY);
 
-    // Mostra as 4 Opções usando DrawText em posições diferentes
-    // Só desenha se não estiver oculta
-    if (!p.opcaoOculta[0]) DrawText(p.opcoes[0], 70, 380, 18, DARKBLUE);
-    if (!p.opcaoOculta[1]) DrawText(p.opcoes[1], 400, 380, 18, DARKBLUE);
-    if (!p.opcaoOculta[2]) DrawText(p.opcoes[2], 70, 440, 18, DARKBLUE);
-    if (!p.opcaoOculta[3]) DrawText(p.opcoes[3], 400, 440, 18, DARKBLUE);
+    desenharTexto(p->texto, cx + 20, cy + 20, 20, BLACK);
 
-    DrawText("Pressione as teclas (1, 2, 3 ou 4) para responder!", 60, 510, 15, DARKGRAY);
+    int col2 = cx + cw / 2;
+    if (!p->opcaoOculta[0]) desenharTexto(p->opcoes[0], cx + 30, cy + 80,  18, DARKBLUE);
+    if (!p->opcaoOculta[1]) desenharTexto(p->opcoes[1], col2,    cy + 80,  18, DARKBLUE);
+    if (!p->opcaoOculta[2]) desenharTexto(p->opcoes[2], cx + 30, cy + 140, 18, DARKBLUE);
+    if (!p->opcaoOculta[3]) desenharTexto(p->opcoes[3], col2,    cy + 140, 18, DARKBLUE);
+
+    desenharTexto("Pressione as teclas (1, 2, 3 ou 4) para responder!", cx + 20, cy + ch - 40, 15, DARKGRAY);
 }

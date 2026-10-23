@@ -39,7 +39,7 @@ typedef struct{
     int opcaoSelecionada; // Controla a seta dentro da janelinha lateral (0, 1 ou 2)
     bool lendoManual; // true = trava a tela com o texto grande do manual
     bool examinandoItemGeral; // true = trava a tela mostrando a descrição de um item comum
-    char textoManual[1000]; // Um vetor gigante para guardar o texto lido do arquivo .txt
+    char textoManual[2048]; // Um vetor gigante para guardar o texto lido do arquivo .txt
 } EstadoMenuInventario;
 
 // Funções do inventário

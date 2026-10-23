@@ -13,15 +13,18 @@ int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas){
     // Se for NULL, imprime um erro no console e retorna NULL.
     if (file_mapa == NULL){
         perror("Erro ao ler o arquivo do mapa");
-        fclose(file_mapa);
         return NULL;
     }
     // Lê a primeira linha usando fscanf(file_mapa, "%d %d", linhas, colunas) para descobrir o tamanho.
-    fscanf(file_mapa, "%d %d", linhas, colunas);
+    if (fscanf(file_mapa, "%d %d", linhas, colunas) != 2 || *linhas <= 0 || *colunas <= 0){
+        printf("Cabecalho invalido em %s\n", MapaTxt);
+        fclose(file_mapa);
+        return NULL;
+    }
     // Usar malloc() para criar um vetor de ponteiros (linhas) e, dentro de um laço 'for', dar malloc() para cada coluna.
     int **vetor_mapa = (int **) malloc(*linhas * sizeof(int *));
     if (vetor_mapa == NULL){
-        printf("Erro ao alocar memoria.\n");
+        fclose(file_mapa);
         return NULL;
     }
     for (int i = 0; i < *linhas; i++){
@@ -30,13 +33,19 @@ int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas){
             printf("Erro ao alocar memoria.\n");
             for (int x = 0; x < i; x++) free(vetor_mapa[x]);
             free(vetor_mapa);
+            fclose(file_mapa);
             return NULL;
         }
     }
     // Usar dois laços 'for' (i e j) e usar fscanf(file_mapa, "%d", &vetor_mapa[i][j]) para ler o resto dos números e preencher a matriz.
     for (int i = 0; i < *linhas; i++){
         for (int j = 0; j < *colunas; j++){
-            fscanf(file_mapa, "%d", &vetor_mapa[i][j]);
+            if (fscanf(file_mapa, "%d", &vetor_mapa[i][j]) != 1){
+                printf("Mapa %s incompleto (linha %d, coluna %d)\n", MapaTxt, i, j);
+                liberarMapa(vetor_mapa, *linhas);
+                fclose(file_mapa);
+                return NULL;
+            }
         }
     }
     // Fecha o arquivo (fclose) e retorna o ponteiro da matriz alocada.
@@ -86,10 +95,15 @@ bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle p
     
     // Em vez de checar todos os blocos do mapa, checamos apenas os blocos que estão imediatamente ao redor e debaixo do jogador.
     // Convertendo a posição em pixels do jogador de volta para índices da matriz:
-    int minX = playerRec.x / MAPA_TILE_SIZE;
-    int minY = playerRec.y / MAPA_TILE_SIZE;
-    int maxX = (playerRec.x + playerRec.width) / MAPA_TILE_SIZE;
-    int maxY = (playerRec.y + playerRec.height) / MAPA_TILE_SIZE;
+    int minX = (int)(playerRec.x / MAPA_TILE_SIZE);
+    int minY = (int)(playerRec.y / MAPA_TILE_SIZE);
+    int maxX = (int)((playerRec.x + playerRec.width)  / MAPA_TILE_SIZE);
+    int maxY = (int)((playerRec.y + playerRec.height) / MAPA_TILE_SIZE);
+
+    if (minX < 0) minX = 0;
+    if (minY < 0) minY = 0;
+    if (maxX >= colunas) maxX = colunas - 1;
+    if (maxY >= linhas)  maxY = linhas - 1;
     
     // Vasculha apenas a área próxima ao jogador.
     for (int i = minY; i <= maxY; i++){

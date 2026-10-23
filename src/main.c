@@ -3,6 +3,7 @@
 #include "entidades.h"
 #include "inventario.h"
 #include "combate.h"
+#include "ui.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,11 +23,13 @@ int main(){
     int faseAtual = 1;
     int **mapa = inicializarMapa("./mapa1.txt", &linhas, &colunas);
 
-    //Texture2D  = LoadTexture("jogador.png");
-    //if (!IsTextureValid(personagem)){
-    //    printf("erroo");
-    //}
-    //Rectangle Recorte = {(personagem.width/7)*2, 0, personagem.height, personagem.width};
+    if (mapa == NULL){
+        printf("Nao foi possivel carregar o mapa inicial.\n");
+        CloseWindow();
+        return 1;
+    }
+
+    carregarFonteUI("../assets/fonts/open-sans.bold.ttf");
 
     // Inicializa a câmera usando o tamanho da janela
     Camera2D camera = criarCamera(larguraTela, alturaTela);
@@ -37,14 +40,6 @@ int main(){
 
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
-    /*jogador.textura = LoadTexture("../assets/images/personagem.png");*/
-
-    /* // inicializar variáveis de controle do jogador
-    jogador.frame = 0;
-    jogador.contador = 0;
-    jogador.estaAndando = false;
-    jogador.direcaoOlhar = 1.0f;
-    */
 
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
@@ -69,7 +64,8 @@ int main(){
     
     FILE *arqManual = fopen("manual.txt", "r");
     if(arqManual){
-        fread(menuInventario.textoManual, sizeof(char), 999, arqManual);
+        size_t lidos = fread(menuInventario.textoManual, 1, sizeof(menuInventario.textoManual) - 1, arqManual);
+        menuInventario.textoManual[lidos] = '\0'; // termina a string
         fclose(arqManual);
     }
     
@@ -93,8 +89,6 @@ int main(){
 
     while (!WindowShouldClose()){
         SetExitKey(KEY_NULL);
-        /*int contadorAnimacao = 0;
-        int frameAnimacao = 0;*/
 
         if (estadoAtual == ESTADO_EXPLORACAO){
             
@@ -140,6 +134,7 @@ int main(){
                     } else if (mudarPergunta){
                         perguntaAtual++;
                         if (perguntaAtual >= qtdPerguntas) perguntaAtual = 0;
+                        for (int k = 0; k < 4; k++) bancoPerguntas[perguntaAtual].opcaoOculta[k] = false;
                         mudarPergunta = false;
                     }
                 }
@@ -183,14 +178,8 @@ int main(){
                     }
                 }
 
-                /*
-                // Desenha o jogador (Azul)
-                DrawRectangleV(jogador.pos, (Vector2){ jogador.tamanho, jogador.tamanho }, BLUE);
-                */
-
                 // Desenha o jogador com animação
                 desenharJogador(&jogador);
-                /*desenharJogador(&jogador, &contadorAnimacao, &frameAnimacao);*/
                 
                 // Desenha o inimigo (Vermelho) se estiver vivo
                 if (inimigo.ativo && faseAtual == 1){
@@ -198,27 +187,24 @@ int main(){
                 }
 
             EndMode2D();
-            
-            DrawText("Ande pelo mapa e encoste no quadrado VERMELHO!", 10, 10, 20, BLACK);
 
         } else if (estadoAtual == ESTADO_COMBATE){
             
-            desenharInterfaceCombate(bancoPerguntas[perguntaAtual], jogador, inimigo);
+            desenharInterfaceCombate(&bancoPerguntas[perguntaAtual], &jogador, &inimigo);
 
             if (tempoMensagem > 0){
                 DrawRectangle(0, 200, larguraTela, 80, Fade(BLACK, 0.7f));
-                int tamanhoTexto = MeasureText(mensagemCombate, 30);
-                DrawText(mensagemCombate, (larguraTela - tamanhoTexto) / 2, 225, 30, corMensagem);
+                int tamanhoTexto = medirTexto(mensagemCombate, 30);
+                desenharTexto(mensagemCombate, (larguraTela - tamanhoTexto) / 2, 225, 30, corMensagem);
             }
             
         } else if (estadoAtual == ESTADO_GAMEOVER){
-            DrawText("GAME OVER!", 300, 250, 40, RED);
-            DrawText("Você foi reprovado...", 300, 300, 20, DARKGRAY);
+            desenharTexto("GAME OVER!", (larguraTela - medirTexto("GAME OVER!", 40)) / 2, 250, 40, RED);
+            desenharTexto("Você foi reprovado...", (larguraTela - medirTexto("Você foi reprovado...", 20)) / 2, 300, 20, DARKGRAY);
         
         } else if (estadoAtual == ESTADO_INVENTARIO){
             desenharMenuInventario(&jogador, &menuInventario, larguraTela, alturaTela);
         }
-        //DrawTexturePro(personagem, Recorte, (Rectangle){100, 100, Recorte.width*0.5, Recorte.height*0.5}, (Vector2){0,0}, 0, WHITE);
 
         EndDrawing();
     }
@@ -226,6 +212,7 @@ int main(){
     liberarMapa(mapa, linhas);
     liberarBancoPerguntas(bancoPerguntas);
     UnloadTexture(jogador.textura); // descarregar jogador
+    descarregarFonteUI();
     CloseWindow();
     return 0;
 }

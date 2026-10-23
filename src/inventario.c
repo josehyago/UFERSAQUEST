@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include "inventario.h"
 #include "entidades.h"
+#include "ui.h"
 
 // FUNÇÃO: adicionarItem
 // OBJETIVO: Tentar colocar um item coletado do chão dentro do vetor (mochila) do jogador.
@@ -220,13 +221,13 @@ void atualizarMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, ItemN
 void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int larguraTela, int alturaTela){
     // Desenha um painel escuro semitransparente cobrindo a tela de exploração
     DrawRectangle(40, 40, larguraTela - 80, alturaTela - 80, Fade(BLACK, 0.9f));
-    DrawText("MENU DO JOGADOR", 60, 60, 30, WHITE);
+    desenharTexto("MENU DO JOGADOR", 60, 60, 30, WHITE);
 
     // Caixa de informações do Jogador (Nome, HP e Score)
     DrawRectangle(60, 120, 100, 100, DARKBLUE);
-    DrawText(jogador->nome, 180, 120, 25, WHITE);
-    DrawText(TextFormat("HP: %d / 100", jogador->hp), 180, 155, 20, GREEN);
-    DrawText(TextFormat("Score: %d", jogador->score), 180, 190, 20, GOLD);
+    desenharTexto(jogador->nome, 180, 120, 25, WHITE);
+    desenharTexto(TextFormat("HP: %d / 100", jogador->hp), 180, 155, 20, GREEN);
+    desenharTexto(TextFormat("Score: %d", jogador->score), 180, 190, 20, GOLD);
 
     // Laço for para desenhar os 10 slots fixos da mochila na tela
     for (int i = 0; i < 10; i++){
@@ -241,7 +242,7 @@ void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int la
             else if (jogador->inventario[i].tipo == ITEM_CURA) corItem = GREEN; // Cura = Verde
             
             DrawRectangle(slot.x + 15, slot.y + 15, 30, 30, corItem);
-            DrawText(jogador->inventario[i].nome, slot.x, slot.y + 65, 10, WHITE);
+            desenharTexto(jogador->inventario[i].nome, slot.x, slot.y + 65, 10, WHITE);
         }
 
         // Desenha uma borda amarela destacando o slot atualmente selecionado pelo jogador
@@ -259,9 +260,9 @@ void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int la
         Item itemAcao = jogador->inventario[menu->itemSelecionado];
         Color corUsar = (itemAcao.tipo == ITEM_CURA) ? WHITE : GRAY; // Desativa visualmente o "Usar" se não for cura
         
-        DrawText("Usar", sub.x + 15, sub.y + 15, 18, (menu->opcaoSelecionada == 0) ? YELLOW : corUsar);
-        DrawText("Examinar", sub.x + 15, sub.y + 45, 18, (menu->opcaoSelecionada == 1) ? YELLOW : WHITE);
-        DrawText("Descartar", sub.x + 15, sub.y + 75, 18, (menu->opcaoSelecionada == 2) ? YELLOW : WHITE);
+        desenharTexto("Usar", sub.x + 15, sub.y + 15, 18, (menu->opcaoSelecionada == 0) ? YELLOW : corUsar);
+        desenharTexto("Examinar", sub.x + 15, sub.y + 45, 18, (menu->opcaoSelecionada == 1) ? YELLOW : WHITE);
+        desenharTexto("Descartar", sub.x + 15, sub.y + 75, 18, (menu->opcaoSelecionada == 2) ? YELLOW : WHITE);
     }
 
     // Se estiver lendo o manual, desenha a janela branca grande com o texto carregado do arquivo de texto
@@ -269,11 +270,11 @@ void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int la
         DrawRectangle(60, 50, larguraTela - 120, alturaTela - 100, RAYWHITE);
         DrawRectangleLines(60, 50, larguraTela - 120, alturaTela - 100, DARKGRAY);
         // Título e instrução de fechar colocados no topo
-        DrawText("MANUAL DE SOBREVIVÊNCIA", 80, 65, 20, BLACK);
-        DrawText("(Aperte ENTER para fechar)", 480, 70, 14, RED);
+        desenharTexto("MANUAL DE SOBREVIVÊNCIA", 80, 65, 20, BLACK);
+        desenharTexto("(Aperte ENTER para fechar)", 480, 70, 14, RED);
         DrawLine(80, 95, larguraTela - 80, 95, GRAY);
         
-        DrawText(menu->textoManual, 80, 105, 11, DARKGRAY); // Exibe o texto formatado do manual.txt
+        desenharTexto(menu->textoManual, 80, 105, 11, DARKGRAY); // Exibe o texto formatado do manual.txt
     } 
     // Se estiver examinando um item comum (Chave ou Coxinha), desenha uma caixa pop-up menor com sua descrição
     else if (menu->examinandoItemGeral){
@@ -281,8 +282,8 @@ void desenharMenuInventario(Jogador *jogador, EstadoMenuInventario *menu, int la
         DrawRectangleLines(150, 200, 500, 150, WHITE);
         
         Item itemAcao = jogador->inventario[menu->itemSelecionado];
-        if (itemAcao.tipo == ITEM_CHAVE) DrawText("Uma chave dourada.\nParece se encaixar na porta final.", 170, 230, 20, WHITE);
-        if (itemAcao.tipo == ITEM_CURA) DrawText("Uma coxinha do RU fresquinha.\nRecupera parte da vida perdida.", 170, 230, 20, WHITE);
-        DrawText("Aperte ENTER para fechar.", 170, 310, 15, GRAY);
+        if (itemAcao.tipo == ITEM_CHAVE) desenharTexto("Uma chave dourada.\nParece se encaixar na porta final.", 170, 230, 20, WHITE);
+        if (itemAcao.tipo == ITEM_CURA) desenharTexto("Uma coxinha do RU fresquinha.\nRecupera parte da vida perdida.", 170, 230, 20, WHITE);
+        desenharTexto("Aperte ENTER para fechar.", 170, 310, 15, GRAY);
     }
 }
