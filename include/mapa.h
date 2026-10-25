@@ -11,17 +11,18 @@
 // Valores que cada célula da matriz do mapa (arquivos mapaN.txt) pode assumir.
 // Os números continuam iguais aos dos arquivos .txt; o enum só dá nome a eles.
 typedef enum {
-    TILE_VOLTA = -1,         // porta de volta: leva para a fase anterior
-    TILE_CHAO = 0,           // chão: o jogador anda livremente
-    TILE_PAREDE = 1,         // parede: bloqueia o jogador
-    TILE_PORTA = 2,          // porta aberta: leva para a próxima fase
-    TILE_PORTA_TRANCADA = 3  // porta trancada: bloqueia até o jogador usar a chave
+    TILE_VOLTA = -1,
+    TILE_GRAMA = 0,
+    TILE_PAREDE = 1,
+    TILE_PORTA = 2,
+    TILE_PORTA_TRANCADA = 3,
+    TILE_TERRA = 4
 } TipoTile;
 
 // Funções do mapa
 int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas);
 void liberarMapa(int **vetor_mapa, int linhas);
-void desenharMapa(int **vetor_mapa, int linhas, int colunas);
+void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset);
 bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle playerRec);
 int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador *j, int *faseAtual);
 void registrarPortaAberta(int fase);

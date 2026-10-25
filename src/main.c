@@ -11,6 +11,7 @@ int main(){
 
     const int larguraTela = 1280;
     const int alturaTela = 720;
+    
 
     InitWindow(larguraTela, alturaTela, "UFERSAQUEST");
     SetTargetFPS(60);
@@ -37,8 +38,12 @@ int main(){
     Jogador jogador;
     inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
 
+    // Carrega a imagem com todas as texturas do cenário (Tileset)
+    Texture2D tilesetMapa = LoadTexture("../assets/images/grama.png");
+
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
+
 
     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
@@ -132,7 +137,7 @@ int main(){
             case ESTADO_EXPLORACAO:
                 // Tudo entre BeginMode2D e EndMode2D usa coordenadas do mapa e é movido pela câmera.
                 BeginMode2D(camera);
-                    desenharMapa(mapa, linhas, colunas);
+                    desenharMapa(**mapa,  linhas, colunas, tilesetMapa); // adicionado recentemente
                     desenharItensNoChao(itensChao, qtdItensChao, faseAtual);
                     desenharJogador(&jogador);
                     if (inimigo.ativo && faseAtual == 1) desenharInimigo(&inimigo);
@@ -141,6 +146,7 @@ int main(){
 
             case ESTADO_COMBATE:
                 desenharCombate(&combate, &jogador, &inimigo);
+                desenharMapa(**mapa,linhas,  colunas,  tilesetMapa);   
                 break;
 
             case ESTADO_GAMEOVER:

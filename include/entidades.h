@@ -9,7 +9,7 @@
 #define HP_MAXIMO 100 // vida máxima (e inicial) do jogador
 
 // Cria as características do jogador
-struct Jogador{
+typedef struct Jogador{
     char nome[20];
     int hp; // pontos de vida
     int score; // pontuação atual do jogador
