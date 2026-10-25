@@ -5,6 +5,8 @@
 #include "entidades.h"
 
 #define MAX_FASES 10 // quantidade máxima de fases (mapa1.txt ... mapa10.txt)
+// Tamanho em pixels de cada bloco DENTRO da imagem sokoban_tilesheet.png
+#define TILE_ORIGINAL_SIZE 64
 
 // Guarda se a porta trancada de cada fase já foi aberta (o índice é o número da fase).
 static bool portaAberta[MAX_FASES + 1] = { false };
@@ -82,30 +84,73 @@ void liberarMapa(int **vetor_mapa, int linhas){
 // POR QUE: o mapa é só números; alguém precisa transformá-los em quadrados coloridos na tela.
 // PARA QUE SERVE: percorre a matriz e desenha um quadrado de MAPA_TILE_SIZE para cada célula.
 // COMPLEXIDADE: O(n2).
-void desenharMapa(int **vetor_mapa, int linhas, int colunas){
-    for (int i = 0; i < linhas; i++){
-        for (int j = 0; j < colunas; j++){
+void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset) {
+    for (int i = 0; i < linhas; i++) {
+        for (int j = 0; j < colunas; j++) {
 
-            // Converte a posição da matriz (índices) para pixels.
-            // Ex: coluna 2 * 100px = posição 200px no eixo X.
-            int posX = j * MAPA_TILE_SIZE;
-            int posY = i * MAPA_TILE_SIZE;
+            // 1. Calcula onde o bloco vai ser desenhado na TELA (em pixels)
+            float posX = j * MAPA_TILE_SIZE;
+            float posY = i * MAPA_TILE_SIZE;
 
-            // Escolhe a cor de acordo com o tipo do bloco.
-            Color cor;
-            switch (vetor_mapa[i][j]){
-                case TILE_PAREDE:          cor = DARKGRAY;  break; // Parede escura
-                case TILE_CHAO:            cor = LIGHTGRAY; break; // Chão claro
+            // Retângulo de Destino (onde e qual tamanho terá na tela: 100x100)
+            Rectangle recDestino = { posX, posY, (float)MAPA_TILE_SIZE, (float)MAPA_TILE_SIZE };
+
+            // 2. Identifica qual o tipo de bloco na posição atual da matriz
+            int tipoBloco = vetor_mapa[i][j];
+
+            // Variáveis para guardar em qual Coluna e Linha da IMAGEM o bloco está
+            int colImagem = 0;
+            int linImagem = 0;
+
+            // 3. Mapeia o número da matriz para a coordenada (Coluna x Linha) do arquivo PNG
+            switch (tipoBloco) {
+                case TILE_GRAMA: // Valor 0 no .txt
+                    colImagem = 0; 
+                    linImagem = 0;
+                    break;
+
+                case TILE_TERRA: // Valor 4 no .txt
+                    colImagem = 1; 
+                    linImagem = 0;
+                    break;
+
+                case TILE_PAREDE: // Valor 1 no .txt
+                    colImagem = 2; 
+                    linImagem = 0;
+                    break;
+
                 case TILE_PORTA:
-                case TILE_VOLTA:           cor = GREEN;     break; // Porta ou saída (verde)
-                case TILE_PORTA_TRANCADA:  cor = MAROON;    break; // Porta trancada (vermelha)
-                default:                   cor = MAGENTA;   break; // Valor desconhecido: denuncia erro no .txt
+                case TILE_VOLTA: // Valores 2 e -1 no .txt (Porta Aberta)
+                    colImagem = 3; 
+                    linImagem = 0;
+                    break;
+
+                case TILE_PORTA_TRANCADA: // Valor 3 no .txt
+                    colImagem = 4; 
+                    linImagem = 0;
+                    break;
+
+                default: // Caso haja um valor estranho, desenha grama por padrão
+                    colImagem = 0; 
+                    linImagem = 0;
+                    break;
             }
 
-            DrawRectangle(posX, posY, MAPA_TILE_SIZE, MAPA_TILE_SIZE, cor);
+            // 4. Recorta o quadrado exato de 64x64 pixels da imagem do tileset
+            Rectangle recOrigem = { 
+                colImagem * TILE_ORIGINAL_SIZE, 
+                linImagem * TILE_ORIGINAL_SIZE, 
+                TILE_ORIGINAL_SIZE, 
+                TILE_ORIGINAL_SIZE 
+            };
+
+            // 5. Desenha na tela ajustando o tamanho de 64px para 100px automaticamente
+            DrawTexturePro(tileset, recOrigem, recDestino, (Vector2){ 0.0f, 0.0f }, 0.0f, WHITE);
         }
     }
 }
+
+
 
 // FUNÇÃO: checarColisaoComMapa
 // PARÂMETROS: vetor_mapa, linhas, colunas - o mapa; playerRec - retângulo de colisão (hitbox) a testar.
@@ -195,7 +240,7 @@ int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador
 
     if (novoMapa == NULL){
         printf("Mapa %d ainda nao existe. Porta desativada.\n", novaFase);
-        vetor_mapa[lin][col] = TILE_CHAO; // transforma em chão para não tentar recarregar a cada quadro
+        vetor_mapa[lin][col] = TILE_GRAMA; // transforma em grama para não tentar recarregar a cada quadro
         return vetor_mapa;
     }
 
