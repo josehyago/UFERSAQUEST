@@ -7,7 +7,7 @@
 // POR QUE: toda struct precisa de valores iniciais; sem isso ficaria com "lixo" de memória.
 // PARA QUE SERVE: define nome, vida, tamanhos, velocidade e zera mochila e animação. A textura (imagem) é carregada depois, na main.
 void inicializarJogador(Jogador *j, Vector2 posInicial){
-    snprintf(j->nome, sizeof(j->nome), "%s", "Ana Paula"); // copia o nome respeitando o tamanho do vetor
+    snprintf(j->nome, sizeof(j->nome), "%s", "Caloura"); // copia o nome respeitando o tamanho do vetor
     j->hp = HP_MAXIMO;        // vida inicial
     j->score = 0;
     j->pos = posInicial;      // posição inicial passada como parâmetro

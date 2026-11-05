@@ -94,7 +94,7 @@ bool resolverTurno(Jogador *j, Inimigo *i, EstadoCombate *c, int escolha){
         if (i->hp < 0) i->hp = 0;
         j->score += 10;
 
-        snprintf(c->mensagem, sizeof(c->mensagem), "%s", "RESPOSTA CORRETA! Dano no chefe!");
+        snprintf(c->mensagem, sizeof(c->mensagem), "%s", "RESPOSTA CORRETA! Dano no Bug de C!");
         c->corMensagem = GREEN;
         c->mudarPergunta = true; // depois da mensagem, avança para a próxima pergunta
     } else {
@@ -103,7 +103,7 @@ bool resolverTurno(Jogador *j, Inimigo *i, EstadoCombate *c, int escolha){
         if (j->hp < 0) j->hp = 0;
         p->opcaoOculta[escolha] = true;
 
-        snprintf(c->mensagem, sizeof(c->mensagem), "%s", "RESPOSTA ERRADA! Você levou dano.");
+        snprintf(c->mensagem, sizeof(c->mensagem), "%s", "RESPOSTA ERRADA! Danos na Caloura!");
         c->corMensagem = RED;
     }
 
@@ -178,7 +178,7 @@ static void desenharInterfaceCombate(const Pergunta *p, const Jogador *j, const 
 
     // Status do jogador (esquerda, verde) e do inimigo (direita, vermelho).
     desenharTexto(TextFormat("Jogador: %s | HP: %d | Score: %d", j->nome, j->hp, j->score), margem, 40, 20, GREEN);
-    const char *txtInimigo = TextFormat("Chefe: %s | HP: %d", i->nome, i->hp);
+    const char *txtInimigo = TextFormat("Bug de C: %s | HP: %d", i->nome, i->hp);
     desenharTexto(txtInimigo, L - margem - medirTexto(txtInimigo, 20), 40, 20, RED);
 
     // Caixa de fundo da pergunta, encostada na parte de baixo da tela.
