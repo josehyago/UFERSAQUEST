@@ -39,7 +39,7 @@ int main(){
     inicializarJogador(&jogador, (Vector2){ 1 * MAPA_TILE_SIZE, 1 * MAPA_TILE_SIZE });
 
     // Carrega a imagem com todas as texturas do cenário (Tileset)
-    Texture2D tilesetMapa = LoadTexture("../assets/images/grama.png");
+    Texture2D tilesetMapa = LoadTexture("../assets/images/ground_05.png"); // imagem da grama
 
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
@@ -137,7 +137,7 @@ int main(){
             case ESTADO_EXPLORACAO:
                 // Tudo entre BeginMode2D e EndMode2D usa coordenadas do mapa e é movido pela câmera.
                 BeginMode2D(camera);
-                    desenharMapa(**mapa,  linhas, colunas, tilesetMapa); // adicionado recentemente
+                    desenharMapa(mapa,  linhas, colunas, tilesetMapa); // adicionado recentemente
                     desenharItensNoChao(itensChao, qtdItensChao, faseAtual);
                     desenharJogador(&jogador);
                     if (inimigo.ativo && faseAtual == 1) desenharInimigo(&inimigo);
@@ -146,7 +146,7 @@ int main(){
 
             case ESTADO_COMBATE:
                 desenharCombate(&combate, &jogador, &inimigo);
-                desenharMapa(**mapa,linhas,  colunas,  tilesetMapa);   
+                desenharMapa(mapa, linhas,  colunas,  tilesetMapa);   
                 break;
 
             case ESTADO_GAMEOVER:
@@ -165,6 +165,7 @@ int main(){
     liberarMapa(mapa, linhas);
     liberarCombate(&combate);
     UnloadTexture(jogador.textura);
+    UnloadTexture(tilesetMapa); // adicionado recentemente
     descarregarFonteUI();
     CloseWindow();
     return 0;
