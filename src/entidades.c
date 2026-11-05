@@ -29,7 +29,7 @@ void inicializarInimigo(Inimigo *i, Vector2 posInicial, const char *nome){
     snprintf(i->nome, sizeof(i->nome), "%s", nome); // copia o nome (que vem de fora) com limite de tamanho
     i->hp = 60;           // vida do inimigo
     i->pos = posInicial;  // posição inicial
-    i->tamanho = 60.0f;   // lado do quadrado do inimigo
+    i->tamanho = 140.0f;   // lado do quadrado do inimigo
     i->ativo = true;      // começa vivo
 }
 

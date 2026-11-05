@@ -40,7 +40,7 @@ int main(){
 
     // Carrega a imagem com todas as texturas do cenário (Tileset)
     Texture2D tilesetMapa = LoadTexture("../assets/images/ground_05.png"); // imagem da grama
-    Texture2D texParede = LoadTexture("../assets/images/block_05.png");
+    Texture2D texParede = LoadTexture("../assets/images/parede.png");
 
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
