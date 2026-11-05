@@ -40,14 +40,17 @@ int main(){
 
     // Carrega a imagem com todas as texturas do cenário (Tileset)
     Texture2D tilesetMapa = LoadTexture("../assets/images/ground_05.png"); // imagem da grama
+    Texture2D texParede = LoadTexture("../assets/images/block_05.png");
 
     // Carrega a textura do jogador
     jogador.textura = LoadTexture("../assets/images/caloura.png");
-
-
-    Inimigo inimigo;
+    
+     Inimigo inimigo;
     // Colocando o inimigo no meio do mapa (Coluna 10, Linha 10)
     inicializarInimigo(&inimigo, (Vector2){ 10 * MAPA_TILE_SIZE, 10 * MAPA_TILE_SIZE }, "Bug de C");
+    // carrega a textura do inimigo
+    inimigo.textura = LoadTexture("../assets/images/bug_de_c.png");
+
 
     // Prepara o combate (banco de perguntas, temporizador, mensagem). Falhar aqui encerra o jogo.
     EstadoCombate combate;
@@ -137,7 +140,7 @@ int main(){
             case ESTADO_EXPLORACAO:
                 // Tudo entre BeginMode2D e EndMode2D usa coordenadas do mapa e é movido pela câmera.
                 BeginMode2D(camera);
-                    desenharMapa(mapa,  linhas, colunas, tilesetMapa); // adicionado recentemente
+                    desenharMapa(mapa,  linhas, colunas, tilesetMapa, texParede); // adicionado recentemente
                     desenharItensNoChao(itensChao, qtdItensChao, faseAtual);
                     desenharJogador(&jogador);
                     if (inimigo.ativo && faseAtual == 1) desenharInimigo(&inimigo);
@@ -146,7 +149,6 @@ int main(){
 
             case ESTADO_COMBATE:
                 desenharCombate(&combate, &jogador, &inimigo);
-                desenharMapa(mapa, linhas,  colunas,  tilesetMapa);   
                 break;
 
             case ESTADO_GAMEOVER:
@@ -165,7 +167,9 @@ int main(){
     liberarMapa(mapa, linhas);
     liberarCombate(&combate);
     UnloadTexture(jogador.textura);
+    UnloadTexture(inimigo.textura);
     UnloadTexture(tilesetMapa); // adicionado recentemente
+    UnloadTexture(texParede);   // adicionado recentemente
     descarregarFonteUI();
     CloseWindow();
     return 0;

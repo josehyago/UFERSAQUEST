@@ -134,5 +134,7 @@ void desenharJogador(const Jogador *j){
 // POR QUE: mantém a main só chamando funções, sem detalhes de desenho.
 // PARA QUE SERVE: desenha o inimigo como um quadrado vermelho (até ele ganhar um sprite).
 void desenharInimigo(const Inimigo *i){
-    DrawRectangleV(i->pos, (Vector2){ i->tamanho, i->tamanho }, RED);
+    Rectangle origem  = { 0, 0, (float)i->textura.width, (float)i->textura.height };
+    Rectangle destino = { i->pos.x, i->pos.y, i->tamanho, i->tamanho };
+    DrawTexturePro(i->textura, origem, destino, (Vector2){ 0, 0 }, 0.0f, WHITE);
 }

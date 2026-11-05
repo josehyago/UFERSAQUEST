@@ -84,7 +84,7 @@ void liberarMapa(int **vetor_mapa, int linhas){
 // POR QUE: o mapa é só números; alguém precisa transformá-los em quadrados coloridos na tela.
 // PARA QUE SERVE: percorre a matriz e desenha um quadrado de MAPA_TILE_SIZE para cada célula.
 // COMPLEXIDADE: O(n2).
-void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset) {
+void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset, Texture2D texParede) {
     for (int i = 0; i < linhas; i++) {
         for (int j = 0; j < colunas; j++) {
 
@@ -97,7 +97,13 @@ void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset) 
 
             // 2. Identifica qual o tipo de bloco na posição atual da matriz
             int tipoBloco = vetor_mapa[i][j];
-
+            
+            // Se for parede, desenha a textura da parede e pula o resto do loop
+            if (tipoBloco == TILE_PAREDE) {
+               Rectangle origemParede = { 0, 0, (float)texParede.width, (float)texParede.height };
+               DrawTexturePro(texParede, origemParede, recDestino, (Vector2){ 0, 0 }, 0.0f, WHITE);
+               continue; // pula o resto, já desenhou este bloco
+}
             // Variáveis para guardar em qual Coluna e Linha da IMAGEM o bloco está
             int colImagem = 0;
             int linImagem = 0;

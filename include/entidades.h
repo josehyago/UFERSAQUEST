@@ -35,6 +35,7 @@ typedef struct{
     Vector2 pos;
     float tamanho;
     bool ativo; // flag booleana: true se o inimigo estiver vivo, false se for derrotado
+    Texture2D textura; // adicionado recentemente
 } Inimigo;
 
 // Funções de entidades

@@ -183,6 +183,16 @@ static void desenharInterfaceCombate(const Pergunta *p, const Jogador *j, const 
 
     // Caixa de fundo da pergunta, encostada na parte de baixo da tela.
     int cx = margem, cw = L - 2 * margem, ch = 250, cy = A - ch - margem / 2;
+    
+    // Imagem do inimigo, centralizada na área livre entre os status (y=70) e a caixa da pergunta.
+    int areaTopo = 70;
+    int areaAltura = cy - areaTopo - 10;
+    float escala = (float)areaAltura / i->textura.height;   // mantém a proporção da imagem
+    float larguraImg = i->textura.width * escala;
+    Rectangle origem  = { 0, 0, (float)i->textura.width, (float)i->textura.height };
+    Rectangle destino = { (L - larguraImg) / 2, (float)areaTopo, larguraImg, (float)areaAltura };
+    DrawTexturePro(i->textura, origem, destino, (Vector2){ 0, 0 }, 0.0f, WHITE);
+    
     DrawRectangle(cx, cy, cw, ch, LIGHTGRAY);
     DrawRectangleLines(cx, cy, cw, ch, DARKGRAY);
 

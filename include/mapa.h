@@ -22,7 +22,7 @@ typedef enum {
 // Funções do mapa
 int **inicializarMapa(const char *MapaTxt, int *linhas, int *colunas);
 void liberarMapa(int **vetor_mapa, int linhas);
-void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset);
+void desenharMapa(int **vetor_mapa, int linhas, int colunas, Texture2D tileset, Texture2D texParede);
 bool checarColisaoComMapa(int **vetor_mapa, int linhas, int colunas, Rectangle playerRec);
 int **checarTransicaoDeFase(int **vetor_mapa, int *linhas, int *colunas, Jogador *j, int *faseAtual);
 void registrarPortaAberta(int fase);
