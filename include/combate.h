@@ -7,6 +7,7 @@
 
 #define DANO_POR_TURNO 20    // HP perdido por quem perde a rodada (jogador ao errar, inimigo ao ser acertado)
 #define TEMPO_MENSAGEM 2.0f  // segundos que o resultado da resposta fica na tela
+#define TEMPO_LIMITE_PERGUNTA 10.0f // segundos que o jogador tem para responder cada pergunta
 
 // Struct Pergunta com texto, 4 opcoes, resposta correta e controle de opções ocultas
 typedef struct{
@@ -22,6 +23,7 @@ typedef struct{
     int qtdPerguntas;     // quantas perguntas existem no banco
     int perguntaAtual;    // índice da pergunta que está na tela
     float tempoMensagem;  // segundos restantes mostrando o resultado (0 = esperando resposta)
+    float tempoRestante;  // cronômetro regressivo para responder a pergunta (10 segundos)
     char mensagem[100];   // texto do resultado ("RESPOSTA CORRETA!...")
     Color corMensagem;    // cor do texto do resultado
     bool mudarPergunta;   // true = ao fim da mensagem, passa para a próxima pergunta
