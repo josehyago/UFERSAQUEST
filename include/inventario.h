@@ -11,7 +11,7 @@
 #define TAMANHO_ITEM 50.0f    // lado do quadrado do item no mapa (menor que o tile de 100px)
 
 // Estados possíveis do jogo
-typedef enum { ESTADO_EXPLORACAO, ESTADO_INVENTARIO, ESTADO_COMBATE, ESTADO_GAMEOVER } EstadoJogo;
+typedef enum { ESTADO_MENU, ESTADO_EXPLORACAO, ESTADO_INVENTARIO, ESTADO_COMBATE, ESTADO_GAMEOVER, ESTADO_PAUSA } EstadoJogo;
 
 // Enumeração para classificar o que cada item faz no jogo.
 // Isso ajuda o sistema a saber se o item cura, se abre porta ou se é texto.
