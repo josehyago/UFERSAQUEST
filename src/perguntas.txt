@@ -1,0 +1,4 @@
+3
+Qual estrutura segue o concepto FIFO? | 1) Pilha | 2) Fila | 3) Árvore | 4) Grafo | 1
+Qual funcao usamos para alocar memoria em C? | 1) malloc | 2) printf | 3) scanf | 4) sizeof | 0
+Quantos bits tem 1 Byte? | 1) 4 bits | 2) 16 bits | 3) 8 bits | 4) 32 bits | 2
